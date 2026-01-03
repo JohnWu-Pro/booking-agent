@@ -210,7 +210,7 @@ var css = /*css*/`
     display: none;
     position: fixed;
     left: 2vw;
-    top: 64vh;
+    top: 56vh;
     width: 96vw;
     background: white;
     border: 1px outset lightgrey;
