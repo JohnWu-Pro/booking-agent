@@ -6,16 +6,29 @@
   <link href="favicon.ico" rel="shortcut icon" type="image/x-icon" sizes="48x48">
   <style>
     body {
-      font-size: x-large;
+      font-size: xx-large;
     }
     code {
-      background: rgb(192, 224, 255);
+      display: inline-block;
+      background: rgb(224, 240, 255);
       font-weight: bold;
+      min-width: 36px;
+      text-align: center;
     }
     code.block {
+      display: block;
       border: 1px dotted gray;
-      background: rgb(224, 224, 255);
+      background: rgb(240, 240, 255);
       cursor: pointer;
+      font-weight: normal;
+      padding: 6px 6px 6px 12px;
+      text-align: left;
+    }
+    code.menu {
+      border: 1px dashed black;
+      border-radius: 2px;
+      background: rgb(192, 224, 255);
+      color: rgb(192, 128, 0);
     }
     span.msg {
       color: blue;
@@ -27,28 +40,27 @@
 </head>
 
 <body>
-  <h2>BookingAgent</h2>
+  <h1>BookingAgent</h1>
   <ul>
-    <li><b>Function</b>: Assist in booking Court or Drop-in that's powered by <a href="https://mobileapp.courtreserve.com" target="_blank">CourtReserve</a>.</li>
-    <li><b>Key Feature</b>: Schedule to click the <code>Confirm</code> button just in time, after you filling in all required fields.</li>
+    <li><b>Function</b>: Assist to <code>Confirm</code> the court reservation that's powered by <a href="https://mobileapp.courtreserve.com" target="_blank">CourtReserve</a>.</li>
+    <li><b>Key Feature</b>: Schedule to click the <code>Confirm</code> button just in time, after all required fields are filled.</li>
   </ul>
 
   <h3>Create a Bookmark</h3>
   <ol>
     <li>Go to <a href="https://johnwu-pro.github.io/booking-agent/index.html">https://johnwu-pro.github.io/booking-agent/index.html</a>.</li>
-    <li>Tap the browser menu (three vertical dots, e.g. <code>&nbsp;⋮&nbsp;</code>, at the top-right or bottom-right corner), and select "Add bookmark" or the star icon (e.g. <code>⭐</code>).</li>
+    <li>Tap the browser menu (three vertical dots, e.g. <code>⋮</code>, at the top-right or bottom-right corner), and select "Add bookmark" or the star icon (e.g. <code>☆</code>).</li>
     <li>Save it, naming it <code>BookingAgent</code>.</li>
   </ol>
 
   <h3>Edit the Bookmark</h3>
   <ol>
-    <li>Go to <a href="https://johnwu-pro.github.io/booking-agent/index.html">https://johnwu-pro.github.io/booking-agent/index.html</a>.</li>
-    <li>Tap the code block below to copy it to the clipboard.<br>
+    <li>Tap the code block below to copy it to the clipboard.
       <code class="block" onclick="copyToClipboard(this)">
 javascript:(() => {
   const url = 'https://johnwu-pro.github.io/booking-agent/bootstrap.js';
-  document.head.appendChild(document.createElement('script')).src=url+'?'+Date.now();
-})();</code><br>
+  document.head.appendChild(document.createElement('script')).src = url+'?'+Date.now();
+})();</code>
       <span class="msg hidden">The code block above is copied to the clipboard successfully.</span>
     </li>
     <li>Go to your browser bookmark list and find the <code>BookingAgent</code>.</li>
@@ -59,12 +71,11 @@ javascript:(() => {
 
   <h3>Use the Bookmark - To assist booking the court</h3>
   <ol>
-    <li>A few minutes before the reservation is open, go to <a href="https://mobileapp.courtreserve.com" target="_blank">https://mobileapp.courtreserve.com</a></li>
-    <li>Log in to the web version of the APP.</li>
-    <li>Choose your organization, e.g. <code>HiSports Stouffville</code>.</li>
-    <li>Choose to <code>Book a Court</code> and go through the operations as you usually do, and just stop before clicking the <code>Confirm</code> button.</li>
+    <li>A few minutes before the reservation is open, log in at <a href="https://mobileapp.courtreserve.com" target="_blank">https://mobileapp.courtreserve.com</a>.</li>
+    <li>Choose your organization (e.g. <code>HiSports Stouffville</code>).</li>
+    <li>Choose to <code>Book a Court</code> and go through the operations as you usually do, just <b><i>stop</i></b> before clicking the <code>Confirm</code> button.</li>
     <li>Type <code>BookingAgent</code> in the address bar and select the <b>suggested the bookmark</b> (to launch the BookingAgent).</li>
-    <li>Tap the <code>☰</code> at the bottom-right of the screen (to launch the dialog).</li>
+    <li>Tap <code class="menu">☰</code> at the bottom-right of the screen (to launch the dialog).</li>
     <li>Follow the tips in the dialog to schedule (and eventually trigger) the booking confirmation.</li>
     <li>Have Fun!</li>
   </ol>

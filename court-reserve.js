@@ -210,7 +210,7 @@ var css = /*css*/`
     display: none;
     position: fixed;
     left: 2vw;
-    top: 48vh;
+    bottom: 8.8vh;
     width: 96vw;
     background: white;
     border: 1px outset lightgrey;
@@ -409,7 +409,7 @@ var BookingAgent = {
 
   dialog: {
     open: function() {
-      BookingAgent.dashboard.hide();
+      BookingAgent.stop();
 
       $E('.booking-agent .backdrop').style.display = 'block';
       $E('.booking-agent .dialog').style.display = 'block';
@@ -540,7 +540,7 @@ var BookingAgent = {
 
     this.stopScheduler();
 
-    // Triggering/Scheduling booking process
+    // Triggering/Scheduling booking confirmation
     const { bookableNow, triggeringDateTime } = this.state;
     const millis = bookableNow ? 0 : triggeringDateTime.getTime() - Date.now();
     this.status = 'Scheduled';
