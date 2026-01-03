@@ -349,7 +349,7 @@ var html = /*html*/`
 `;
 
 var messages = {
-  start: 'Adjust the Booking Lead Time, then click the button above.',
+  start: 'Adjust the Booking Lead Time, then tap the button above.',
 };
 
 var BookingAgent = {
