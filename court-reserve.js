@@ -210,7 +210,7 @@ var css = /*css*/`
     display: none;
     position: fixed;
     left: 2vw;
-    bottom: 8.8vh;
+    bottom: 20vw;
     width: 96vw;
     background: white;
     border: 1px outset lightgrey;
@@ -228,6 +228,7 @@ var css = /*css*/`
     color: black;
   }
   .booking-agent span.ctrl {
+    background: rgb(208,208,208);
     padding: 0 6px;
     float: right;
   }
