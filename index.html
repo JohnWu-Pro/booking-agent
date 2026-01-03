@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Booking Agent</title>
+  <style>
+    code {
+      background: rgb(192, 224, 255);
+      font-weight: bold;
+    }
+    code.block {
+      border: 1px dotted gray;
+      background: rgb(224, 224, 255);
+      cursor: pointer;
+    }
+    span.msg {
+      color: blue;
+    }
+    span.msg.hidden {
+      color: white;
+    }
+  </style>
+</head>
+
+<body>
+  <h2>Booking Agent</h2>
+  <p>Book Pickleball Court/Drop-in @ HiSports Stouffville</p>
+
+  <h3>Create a Bookmark</h3>
+  <ol>
+    <li>Go to <a href="https://johnwu-pro.github.io/booking-agent/index.html">https://johnwu-pro.github.io/booking-agent/index.html</a>.</li>
+    <li>Tap the browser menu (three vertical dots, e.g. <code>&nbsp;⋮&nbsp;</code>, at the top-right or bottom-right corner), and select "Add bookmark" or the star icon (e.g. <code>⭐</code>).</li>
+    <li>Save it, naming it <code>Booking Agent</code>.</li>
+  </ol>
+
+  <h3>Edit the Bookmark</h3>
+  <ol>
+    <li>Go to <a href="https://johnwu-pro.github.io/booking-agent/index.html">https://johnwu-pro.github.io/booking-agent/index.html</a>.</li>
+    <li>Tap the code block below to copy it to the clipboard.<br>
+      <code class="block" onclick="copyToClipboard(this)">
+        javascript:(() => {
+          const url = 'https://johnwu-pro.github.io/booking-agent/bootstrap.js';
+          document.head.appendChild(document.createElement('script')).src=url+'?'+Date.now();
+        })();
+      </code><br>
+      <span class="msg hidden">The code block above is copied to the clipboard successfully.</span>
+    </li>
+    <li>Go to your browser bookmark list and find the <code>Booking Agent</code>.</li>
+    <li>Tap and hold (or tap the menu next to it) and select Edit.</li>
+    <li>Replace the URL with the code in the clipboard (which you just copied from the code block above).</li>
+    <li>Save the change.</li>
+  </ol>
+
+  <h3>Use the Bookmark - To assist booking the court</h3>
+  <ol>
+    <li>A few minutes prior to the moment that you are allowed to book the desired court, go to <a href="https://mobileapp.courtreserve.com" target="_blank">https://mobileapp.courtreserve.com</a></li>
+    <li>Log in to the web version of the APP.</li>
+    <li>Choose the organization <code>HiSports Stouffville</code>.</li>
+    <li>Choose to <code>Book a Court</code> and go through the operations as you usually do, and just stop before clicking the <code>Confirm</code> button.</li>
+    <li>Type <code>Booking Agent</code> in the address bar and select the suggestion (to launch the Booking Agent).</li>
+    <li>Tap the <code>☰</code> at the bottom-right of the screen (to launch the dialog).</li>
+    <li>Follow the tips in the dialog to schedule (and eventually trigger) the booking confirmation.</li>
+    <li>Have Fun!</li>
+  </ol>
+
+  <script>
+    function $E(cssSelector, container) {
+      return (container ?? document).querySelector(cssSelector);
+    }
+    function copyToClipboard(element) {
+      $E('span.msg').classList.add('hidden');
+
+      const text = element.textContent;
+      navigator.clipboard.writeText(text).then(() => {
+        $E('span.msg').classList.remove('hidden');
+      }).catch(err => {
+        console.error('Could not copy text to clipboard.', err);
+      });
+    }
+  </script>
+</body>
+
+</html>

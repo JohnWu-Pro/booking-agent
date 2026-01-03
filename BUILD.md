@@ -12,19 +12,19 @@ To setup local directory structure
 # Windows commands
 cd <project-dir>
 mkdir ..\http-server.public
-mklink /J ..\http-server.public\bookalet .
+mklink /J ..\http-server.public\booking-agent .
 ```
 OR
 ```
 # Linux/Unix commands
 cd <project-dir>
 mkdir -p ../http-server.public
-ln ./ ../http-server.public/bookalet/
+ln ./ ../http-server.public/booking-agent/
 ```
 
 # Running locally
 ```
-http-server ../http-server.public/bookalet/ -c-1 -p 9088
+http-server ../http-server.public/ -c-1 -p 9088
 
-# then, open http://localhost:9088/index.html
+# then, open http://localhost:9088/booking-agent/index.html
 ```
