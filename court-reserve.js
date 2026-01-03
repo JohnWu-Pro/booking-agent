@@ -445,7 +445,6 @@ var BookingAgent = {
   navigateToTargetPage: function() {
     const { origin, pathname } = window.location
     const { origin: siteOrigin, loginPath, reservationPrefix, knownPaths } = this.site;
-    // console.debug('[DEBUG] origin: %o, pathname: %o, siteOrigin: %o', origin, pathname, siteOrigin);
     if (origin !== siteOrigin) {
       console.info('[INFO] Navigating to Mobile App login page.');
       window.location.assign(siteOrigin + loginPath);
@@ -453,7 +452,6 @@ var BookingAgent = {
     }
 
     const [_, page, id] = pathname.match(knownPaths) ?? [];
-    // console.debug('[DEBUG] page: %o, id: %o', page, id);
     if (page && id) { // is known path
       if (page === '/Reservations/Index') {
         return true;
@@ -484,10 +482,6 @@ var BookingAgent = {
     const triggeringDateTime = new Date(selectedReservationDateTime);
     const { reservationLeadDays, bookingLeadTimeMillis } = settings;
     triggeringDateTime.setDate(triggeringDateTime.getDate() - reservationLeadDays);
-    // TODO: Remove DEBUG
-    // triggeringDateTime.setDate(triggeringDateTime.getDate() + 2);
-    // triggeringDateTime.setHours(triggeringDateTime.getHours() - 8);
-    // triggeringDateTime.setMinutes(triggeringDateTime.getMinutes() + 56);
 
     triggeringDateTime.setMilliseconds(triggeringDateTime.getMilliseconds() - bookingLeadTimeMillis);
 
