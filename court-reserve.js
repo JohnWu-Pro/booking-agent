@@ -210,7 +210,7 @@ var css = /*css*/`
     display: none;
     position: fixed;
     left: 2vw;
-    top: 56vh;
+    top: 48vh;
     width: 96vw;
     background: white;
     border: 1px outset lightgrey;
@@ -232,7 +232,6 @@ var css = /*css*/`
     float: right;
   }
   .booking-agent span.ctrl > .ctrl-btn {
-    padding-top: 4px;
     font: bold large webdings;
     cursor: pointer;
   }
@@ -320,7 +319,7 @@ var html = /*html*/`
     <div class="header-panel">
       <span class="title">Booking Agent</span>&nbsp;
       <span class="ctrl">
-        <span class="ctrl-btn close" onclick="BookingAgent.dialog.close()">&#114;</span>
+        <span class="ctrl-btn close" onclick="BookingAgent.dialog.close()">✕</span>
       </span>
     </div>
     <div class="input-panel">
