@@ -556,14 +556,6 @@ var BookingAgent = {
     this.status = 'Loaded';
   },
 
-  stopScheduler: function() {
-    if(this.scheduler !== 0) {
-      clearTimeout(this.scheduler);
-      this.scheduler = 0;
-      this.status = 'Loaded';
-    }
-  },
-
   stop: function() {
     this.dashboard.hide();
     this.stopScheduler();
@@ -574,6 +566,14 @@ var BookingAgent = {
 
     $E('.booking-agent').remove();
     $E('style#booking-agent').remove();
+  },
+
+  stopScheduler: function() {
+    if(this.scheduler !== 0) {
+      clearTimeout(this.scheduler);
+      this.scheduler = 0;
+      this.status = 'Loaded';
+    }
   },
 
   scheduleBooking: function() {
