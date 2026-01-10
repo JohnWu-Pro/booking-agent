@@ -4,6 +4,10 @@ function isNumber(value) {
   return typeof value === 'number' && Number.isFinite(value);
 }
 
+function $A(cssSelector, container) {
+  return (container ?? document).querySelectorAll(cssSelector);
+}
+
 function $E(cssSelector, container) {
   return (container ?? document).querySelector(cssSelector);
 }
@@ -19,6 +23,10 @@ function create(tag, attributes) {
 function append(tag, attributes, container) {
   const element = create(tag, attributes);
   return (container ?? document.body).appendChild(element);
+}
+
+function delay(millis, value) {
+  return new Promise(resolve => setTimeout(() => resolve(value), millis));
 }
 
 function toDateTimeStringWithoutTz(datetime) {
@@ -64,7 +72,7 @@ class Timer {
   }
 
   #toggleTicking() {
-    if (this.#status !== 0 && this.#endTimestamp) {
+    if(this.#status !== 0 && this.#endTimestamp) {
       this.#status = this.#status === 1 ? 2 : 1;
       this.#tick();
     }
@@ -78,7 +86,7 @@ class Timer {
     );
 
     const rem = Math.ceil(currentMillis / 1000) * 1000 - currentMillis;
-    if (this.#status !== 0) setTimeout(() => this.#tick(), rem);
+    if(this.#status !== 0) setTimeout(() => this.#tick(), rem);
   }
 
   static format(millis) {
@@ -108,7 +116,7 @@ class Settings {
 
   constructor(selectors, defaultValue) {
     this.#$elements = {};
-    for (const [key, selector] of Object.entries(selectors)) {
+    for(const [key, selector] of Object.entries(selectors)) {
       this.#$elements[key] = $E(selector);
     }
     this.#default = defaultValue;
@@ -123,11 +131,11 @@ class Settings {
   }
 
   resolveValue() {
-    for (const [key, element] of Object.entries(this.#$elements)) {
+    for(const [key, element] of Object.entries(this.#$elements)) {
       const _default = this.#default[key];
       let value = element.value;
-      if (value) {
-        if (isNumber(_default)) value = Number(value);
+      if(value) {
+        if(isNumber(_default)) value = Number(value);
       } else {
         value = _default;
       }
@@ -136,7 +144,7 @@ class Settings {
   }
 
   updateElement() {
-    for (const [key, value] of Object.entries(this.#value)) {
+    for(const [key, value] of Object.entries(this.#value)) {
       this.#$elements[key].value = value;
     }
   }
@@ -214,27 +222,31 @@ var css = /*css*/`
     width: 96vw;
     background: white;
     border: 1px outset lightgrey;
+    border-radius: 3px;
     z-index: 9002;
   }
   .booking-agent .header-panel {
+    display: flex;
     background: rgb(224,224,224);
-    padding: 0;
-    width: 100%;
+    padding: 0 1vw;
   }
-  .booking-agent span.title {
-    padding: 0 6px;
-    float: left;
+  .booking-agent .header-panel .title {
     font-weight: bold;
     color: black;
   }
-  .booking-agent span.ctrl {
-    background: rgb(208,208,208);
-    padding: 0 6px;
-    float: right;
+  .booking-agent .header-panel .ctrl {
+    margin-left: auto;
+    display: flex;
   }
-  .booking-agent span.ctrl > .ctrl-btn {
-    font: bold large webdings;
+  .booking-agent .header-panel .ctrl > .ctrl-btn {
+    background: rgb(208,208,208);
     cursor: pointer;
+    height: 24px;
+    width: 24px;
+    text-align: center;
+  }
+  .booking-agent .header-panel .ctrl > .ctrl-btn:nth-of-type(1) {
+    margin-right: .8vw;
   }
 
   .booking-agent .input-panel {
@@ -318,10 +330,11 @@ var html = /*html*/`
   <div class="backdrop"></div>
   <div class="dialog">
     <div class="header-panel">
-      <span class="title">Booking Agent</span>&nbsp;
-      <span class="ctrl">
-        <span class="ctrl-btn close" onclick="BookingAgent.dialog.close()">✕</span>
-      </span>
+      <div class="title">Booking Agent</div>
+      <div class="ctrl">
+        <div class="ctrl-btn help" onclick="window.open('https://johnwu-pro.github.io/booking-agent/index.html?section=overview')">ⓘ</div>
+        <div class="ctrl-btn close" onclick="BookingAgent.dialog.close()">✕</div>
+      </div>
     </div>
     <div class="input-panel">
       <div>
@@ -332,12 +345,20 @@ var html = /*html*/`
         <label for="bookingLeadTimeMillis">Booking Lead Time:</label>
         <select name="bookingLeadTimeMillis" onchange="BookingAgent.onUpdateSettings()">
           <option value="0">0</option>
-          <option value="50">50ms</option>
           <option value="100">100ms</option>
           <option value="200">200ms</option>
           <option value="300">300ms</option>
           <option value="500">500ms</option>
+          <option value="600">600ms</option>
+          <option value="700">700ms</option>
+          <option value="800">800ms</option>
+          <option value="900">900ms</option>
+          <option value="1000">1s</option>
         </select>
+      </div>
+      <div>
+        <label for="preferredCourts">Preferred Courts:</label>
+        <input name="preferredCourts" type="text" onchange="BookingAgent.onUpdateSettings()">
       </div>
     </div>
     <div class="cmd-panel">
@@ -374,7 +395,8 @@ var BookingAgent = {
 
   defaultSettings: {
     reservationLeadDays: 10,
-    bookingLeadTimeMillis: 100,
+    bookingLeadTimeMillis: 700,
+    preferredCourts: '6, 4, 5'
   },
 
   settings: undefined,
@@ -394,14 +416,14 @@ var BookingAgent = {
 
     show: function(state) {
       const { bookableNow, triggeringDateTime } = state;
-      if (bookableNow) return;
+      if(bookableNow) return;
 
       $E(this.selector).style.display = 'block';
       this.timer.tickDown(triggeringDateTime);
     },
 
     hide: function() {
-      if (this.selector) {
+      if(this.selector) {
         this.timer.stop();
         $E(this.selector).style.display = 'none';
       }
@@ -427,6 +449,7 @@ var BookingAgent = {
       // Based on settings and input form to update button label
       const form = new FormData($E('form#createReservation-Form'));
       BookingAgent.state = BookingAgent.resolveState(form, BookingAgent.settings.value);
+      // console.debug('[DEBUG] BookingAgent.state: %o', BookingAgent.state);
 
       const { bookableNow, triggeringDateTime } = BookingAgent.state;
       BookingAgent.cmdButtons.scheduleBooking.innerHTML = bookableNow
@@ -445,15 +468,15 @@ var BookingAgent = {
   navigateToTargetPage: function() {
     const { origin, pathname } = window.location
     const { origin: siteOrigin, loginPath, reservationPrefix, knownPaths } = this.site;
-    if (origin !== siteOrigin) {
+    if(origin !== siteOrigin) {
       console.info('[INFO] Navigating to Mobile App login page.');
       window.location.assign(siteOrigin + loginPath);
       return false;
     }
 
     const [_, page, id] = pathname.match(knownPaths) ?? [];
-    if (page && id) { // is known path
-      if (page === '/Reservations/Index') {
+    if(page && id) { // is known path
+      if(page === '/Reservations/Index') {
         return true;
       } else {
         console.info('[INFO] Navigating to Mobile App reservations page.');
@@ -473,21 +496,39 @@ var BookingAgent = {
   },
 
   resolveState: function(form, settings) {
-    // Resolve the selected reservation date and time
+    function resolveCourtsToTry(selectedCourt, preferredCourts) {
+      // console.debug('[DEBUG] selectedCourt: %o, preferredCourts: %o', selectedCourt, preferredCourts);
+      const courts = (!preferredCourts || preferredCourts === 'none')
+        ? []
+        : preferredCourts.split(',').map(s => s.trim()).filter(s => /^\d+$/.test(s))
+        ;
+
+      return courts.filter(s => s !== selectedCourt);
+    }
+
+    // console.debug('[DEBUG] form: %o', Object.fromEntries(form));
     const date = form.get('Date');
     const time = form.get('StartTime');
+    const selectedCourt = form.get('CourtId').at(-1);
 
     const selectedReservationDateTime = new Date(`${date.substring(0,10)} ${time}`);
 
     const triggeringDateTime = new Date(selectedReservationDateTime);
-    const { reservationLeadDays, bookingLeadTimeMillis } = settings;
+    const { reservationLeadDays, bookingLeadTimeMillis, preferredCourts } = settings;
     triggeringDateTime.setDate(triggeringDateTime.getDate() - reservationLeadDays);
 
     triggeringDateTime.setMilliseconds(triggeringDateTime.getMilliseconds() - bookingLeadTimeMillis);
 
     const bookableNow = triggeringDateTime.getTime() <= Date.now();
+    const courtsToTry = bookableNow ? [] : resolveCourtsToTry(selectedCourt, preferredCourts);
 
-    return { selectedReservationDateTime, bookableNow, triggeringDateTime };
+    return {
+      selectedCourt,
+      selectedReservationDateTime,
+      triggeringDateTime,
+      bookableNow,
+      courtsToTry,
+    };
   },
 
   initialized: function() {
@@ -501,6 +542,7 @@ var BookingAgent = {
     this.settings = new Settings({
       reservationLeadDays: 'input[name="reservationLeadDays"]',
       bookingLeadTimeMillis: 'select[name="bookingLeadTimeMillis"]',
+      preferredCourts: 'input[name="preferredCourts"]',
     }, this.defaultSettings);
 
     this.dashboard.init('.booking-agent .dashboard');
@@ -515,7 +557,7 @@ var BookingAgent = {
   },
 
   stopScheduler: function() {
-    if (this.scheduler !== 0) {
+    if(this.scheduler !== 0) {
       clearTimeout(this.scheduler);
       this.scheduler = 0;
       this.status = 'Loaded';
@@ -545,26 +587,144 @@ var BookingAgent = {
     const { bookableNow, triggeringDateTime } = this.state;
     const millis = bookableNow ? 0 : triggeringDateTime.getTime() - Date.now();
     this.status = 'Scheduled';
-    this.scheduler = setTimeout(() => this.confirmBooking(), millis);
+    this.scheduler = setTimeout(() => this.triggerBooking(), millis);
   },
 
-  confirmBooking: function() {
-    if (this.status === 'Scheduled') {
+  triggerBooking: async function() {
+    if(this.status === 'Scheduled') {
       this.status = 'Booking';
 
       this.dashboard.hide();
-      console.info('[INFO] Trigering booking process ...');
-      $E('button[data-testid="Confirm"]').click();
+
+      if(this.state.selectedCourt) {
+        await this.confirmAndRetry();
+      } else if(await this.selectNextPreferredCourt()) {
+        await this.confirmAndRetry();
+      }
+
       this.status = 'Booked';
     }
-  }
+  },
+
+  confirmAndRetry: async function() {
+    const selectors = {
+      pageTitle: 'span.page-title',
+      confirmButton: 'button[data-testid="Confirm"]',
+      errorDialog: 'div.swal2-popup.swal2-modal',
+      errorMessage: 'div#swal2-html-container',
+      errorDialogOkButton: 'button.swal2-confirm'
+    };
+
+    async function waitForCompletion() {
+      // When in-progress,
+      //   confirm button innerHTML: ... <span class="btn-active-spinner"></span>
+      // When done with error
+      //   $E('span.page-title').innerText: Create Reservation
+      //   confirm button innerHTML: Confirm
+      // When succeeded,
+      //   $E('span.page-title').innerText: Expanded
+      //   confirm button not exist
+      //
+      // When error, $E('div#swal2-html-container')?.innerText:
+      // -- reservation not open yet
+      // John Doe is only allowed to reserve up to 1-13-2026, 10:07 PM
+      // -- court is no longer available
+      // Court Hard - Court #2 no longer available.
+      // -- -- -- other non-retryable errors:
+      // -- need more players
+      // Doubles requires 3 additional players.
+      // Singles requires 1 additional player.
+      // -- 2 hours interval
+      // -- up to 2 reservations
+      while (true) {
+        await delay(100);
+        const button = $E(selectors.confirmButton);
+        if(button) {
+          if(button.innerHTML.includes('<span class="btn-active-spinner"></span>')) {
+            console.debug('[DEBUG] Confirm button is spinning ...');
+            continue;
+          } else if($E(selectors.errorDialog)) {
+            console.debug('[DEBUG] Confirm button is normal, error dialog shows up.');
+            const message = $E(selectors.errorMessage);
+            if(message.match(/^(?<name>.+) is only allowed to reserve up to (?<time>.+)$/)) {
+              return 'reservationNotOpenYet'
+            } else if(message.match(/^(?<court>.+) no longer available.$/)) {
+              return 'courtNoLongerAvailable'
+            } else {
+              return 'nonRetryableError'
+            }
+          } else {
+            console.debug('[DEBUG] Confirm button is normal, waiting for error dialog ...');
+            continue;
+          }
+        } else if($E(selectors.pageTitle).innerText === 'Expanded') {
+          console.debug('[DEBUG] Confirm button not exists, navigated to Expanded page.');
+          return 'succeeded';
+        } else {
+          console.debug('[DEBUG] Confirm button not exists, waiting for navigation to Expanded page ...');
+          continue;
+        }
+      }
+    }
+
+    $E(selectors.confirmButton).click();
+    const result = await waitForCompletion();
+    switch(result) {
+      case 'reservationNotOpenYet':
+        $E(selectors.errorDialogOkButton).click();
+        await this.confirmAndRetry();
+        break;
+      case 'courtNoLongerAvailable':
+        $E(selectors.errorDialogOkButton).click();
+        if(await this.selectNextPreferredCourt()) {
+          await this.confirmAndRetry();
+        }
+        break;
+      case 'succeeded':
+        console.info('[INFO] Succeeded in confirming the booking.');
+        break;
+      default: // nonRetryableError
+        console.error('[ERROR] A non-retryable error is encountered.');
+    }
+  },
+
+  selectNextPreferredCourt: async function() {
+    if(this.state.courtsToTry.length === 0) return false; // no more to try
+
+    function selectCourt(options, courtId) {
+      for(const option of options) {
+        const [_, id] = option.innerText.match(/Hard - Court #(\d+)/)
+        if(id === courtId) {
+          option.click();
+          return true; // court selected
+        }
+      }
+      return false; // court not found
+    }
+
+    $E('span[aria-controls="CourtId_listbox"]').click();
+    await delay(100);
+
+    const options = $A('div.dynamic-ul-CourtId li[role="option"]');
+    while (true) {
+      const courtId = this.state.courtsToTry.shift();
+      if(!courtId) break;
+
+      if(selectCourt(options, courtId)) {
+        return true; // try newly selected court
+      } // else, try to select next preferred court
+    }
+
+    $E('span.close-mobile-bottom-modal').click();
+    return false; // no more to try
+  },
 
 };
 window.BookingAgent = BookingAgent;
 
 try {
-  if (BookingAgent.navigateToTargetPage()) {
-    if (BookingAgent.initialized()) {
+  if(BookingAgent.navigateToTargetPage()) {
+    if(BookingAgent.initialized()) {
       BookingAgent.destroy();
     }
 

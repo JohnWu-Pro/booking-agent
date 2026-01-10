@@ -30,6 +30,10 @@
       background: rgb(192, 224, 255);
       color: rgb(192, 128, 0);
     }
+    code.value {
+      background: rgb(240, 240, 255);
+      font-weight: normal;
+    }
     span.msg {
       color: blue;
     }
@@ -41,49 +45,77 @@
 
 <body>
   <h1>BookingAgent</h1>
-  <ul>
-    <li><b>Function</b>: Assist to <code>Confirm</code> the court reservation that's powered by <a href="https://mobileapp.courtreserve.com" target="_blank">CourtReserve</a>.</li>
-    <li><b>Key Feature</b>: Schedule to click the <code>Confirm</code> button just in time, after all required fields are filled.</li>
-  </ul>
 
-  <h3>Create a Bookmark</h3>
-  <ol>
-    <li>Go to <a href="https://johnwu-pro.github.io/booking-agent/index.html">https://johnwu-pro.github.io/booking-agent/index.html</a>.</li>
-    <li>Tap the browser menu (three vertical dots, e.g. <code>⋮</code>, at the top-right or bottom-right corner), and select "Add bookmark" or the star icon (e.g. <code>☆</code>).</li>
-    <li>Save it, naming it <code>BookingAgent</code>.</li>
-  </ol>
+  <div class="section" id="overview">
+    <ul>
+      <li><b>Function</b>: Assist to <code>Confirm</code> the court reservation that's powered by <a href="https://mobileapp.courtreserve.com" target="_blank">CourtReserve</a>.</li>
+      <li><b>Key Feature</b>: Schedule to click the <code>Confirm</code> button just in time, after all required fields are filled.</li>
+      <li><b>Working Logic</b>: A short moment (specified by the <code>Booking Leading Time</code>) before the reservation is officially open, the <code>BookingAgent</code>
+        <ol>
+          <li>Clicks the <code>Confirm</code> button, then wait for the response.</li>
+          <li>If the response indicates a success, the process ends.</li>
+          <li>Else-If the response indicates <code class="value">reservation-not-open-yet</code>, go back to step 1.</li>
+          <li>Else-If the response indicates <code class="value">court-no-longer-available</code>, select next preferred court, and go back to step 1.</li>
+          <li>Else, the response indicates a <code class="value">non-retryable-error</code>, the process stops, and waits for the user to fix the error.</li>
+        </ol>
+      </li>
+      <li><b>Court would be Tried</b>: Assuming the specified <code>Preferred Courts</code> are <code>6, 5, 4</code>,
+        <ul>
+          <li>If <b>no</b> initially selected court, the courts <code class="value">6, 5, 4</code> would be tried.</li>
+          <li>If initially selected court is <code class="value">6</code>, the courts <code class="value">6, 5, 4</code> would be tried.</li>
+          <li>If initially selected court is <code class="value">5</code>, the courts <code class="value">5, 6, 4</code> would be tried.</li>
+          <li>If initially selected court is <code class="value">1</code>, the courts <code class="value">1, 6, 5, 4</code> would be tried.</li>
+        </ul>
+        If the <code>Preferred Courts</code> is <code class="value">none</code>, only the initially selected court would be tried.
+      </li>
+    </ul>
+  </div>
 
-  <h3>Edit the Bookmark</h3>
-  <ol>
-    <li>Tap the code block below to copy it to the clipboard.
-      <code class="block" onclick="copyToClipboard(this)">
-javascript:(() => {
-  const url = 'https://johnwu-pro.github.io/booking-agent/bootstrap.js';
-  document.head.appendChild(document.createElement('script') ).src = url+'?'+Date.now();
-})();</code>
-      <span class="msg hidden">The code block above is copied to the clipboard successfully.</span>
-    </li>
-    <li>Go to your browser bookmark list and find the <code>BookingAgent</code>.</li>
-    <li>Tap and hold (or tap the menu next to it) and select Edit.</li>
-    <li>Replace the URL with the code in the clipboard (which you just copied from the code block above).</li>
-    <li>Save the change.</li>
-  </ol>
+  <div class="section" id="bookmark">
+    <h3>Create a Bookmark</h3>
+    <ol>
+      <li>Go to <a href="https://johnwu-pro.github.io/booking-agent/index.html">https://johnwu-pro.github.io/booking-agent/index.html</a>.</li>
+      <li>Tap the browser menu (three vertical dots, e.g. <code>⋮</code>, at the top-right or bottom-right corner), and select "Add bookmark" or the star icon (e.g. <code>☆</code>).</li>
+      <li>Save it, naming it <code>BookingAgent</code>.</li>
+    </ol>
 
-  <h3>Use the Bookmark - To assist booking the court</h3>
-  <ol>
-    <li>A few minutes before the reservation is open, log in at <a href="https://mobileapp.courtreserve.com" target="_blank">https://mobileapp.courtreserve.com</a>.</li>
-    <li>Choose your organization (e.g. <code>HiSports Stouffville</code>).</li>
-    <li>Choose to <code>Book a Court</code> and go through the operations as you usually do, just <b><i>stop</i></b> before clicking the <code>Confirm</code> button.</li>
-    <li>Type <code>BookingAgent</code> in the address bar and select the <b>suggested the bookmark</b> (to launch the BookingAgent).</li>
-    <li>Tap <code class="menu">☰</code> at the bottom-right of the screen (to launch the dialog).</li>
-    <li>Follow the tips in the dialog to schedule (and eventually trigger) the booking confirmation.</li>
-    <li>Have Fun!</li>
-  </ol>
+    <h3>Edit the Bookmark</h3>
+    <ol>
+      <li>Tap the code block below to copy it to the clipboard.
+        <code class="block" onclick="copyToClipboard(this)">
+  javascript:(() => {
+    const url = 'https://johnwu-pro.github.io/booking-agent/bootstrap.js';
+    document.head.appendChild(document.createElement('script') ).src = url+'?'+Date.now();
+  })();</code>
+        <span class="msg hidden">The code block above is copied to the clipboard successfully.</span>
+      </li>
+      <li>Go to your browser bookmark list and find the <code>BookingAgent</code>.</li>
+      <li>Tap and hold (or tap the menu next to it) and select Edit.</li>
+      <li>Replace the URL with the code in the clipboard (which you just copied from the code block above).</li>
+      <li>Save the change.</li>
+    </ol>
+
+    <h3>Use the Bookmark - To assist booking the court</h3>
+    <ol>
+      <li>A few minutes before the reservation is open, log in at <a href="https://mobileapp.courtreserve.com" target="_blank">https://mobileapp.courtreserve.com</a>.</li>
+      <li>Choose your organization (e.g. <code>HiSports Stouffville</code>).</li>
+      <li>Choose to <code>Book a Court</code> and go through the operations as you usually do, just <b><i>stop</i></b> before clicking the <code>Confirm</code> button.</li>
+      <li>Type <code>BookingAgent</code> in the address bar and select the <b>suggested the bookmark</b> (to launch the BookingAgent).</li>
+      <li>Tap <code class="menu">☰</code> at the bottom-right of the screen (to launch the dialog).</li>
+      <li>Follow the tips in the dialog to schedule (and eventually trigger) the booking confirmation.</li>
+      <li>Have Fun!</li>
+    </ol>
+  </div>
 
   <script>
+    function $A(cssSelector, container) {
+      return (container ?? document).querySelectorAll(cssSelector);
+    }
+
     function $E(cssSelector, container) {
       return (container ?? document).querySelector(cssSelector);
     }
+
     function copyToClipboard(element) {
       $E('span.msg').classList.add('hidden');
 
@@ -93,6 +125,15 @@ javascript:(() => {
       }).catch(err => {
         console.error('Could not copy text to clipboard.', err);
       });
+    }
+
+    const section = new URLSearchParams(location.search).get('section');
+    if(section && section != 'all') {
+      for(const div of $A('div.section')) {
+        if(div.id !== section) {
+          div.style.display = 'none';
+        }
+      }
     }
   </script>
 </body>
