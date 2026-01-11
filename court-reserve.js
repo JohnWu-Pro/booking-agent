@@ -195,7 +195,7 @@ var css = /*css*/`
     bottom: 20vw;
     left: 24vw;
     width: auto;
-    height: 12vw;
+    height: auto;
     background: rgba(224,224,224,0.95);
     border: none;
     border-radius: 2vw;
@@ -206,9 +206,8 @@ var css = /*css*/`
   .booking-agent > .dashboard > .timer {
     color: black;
     padding: 0 3vw;
-    display: inline-block;
+    display: block;
     font: normal 12vw 'Digital-7 Mono', sans-serif;
-    margin: auto;
     cursor: pointer;
   }
 
@@ -380,7 +379,7 @@ var html = /*html*/`
 `;
 
 var messages = {
-  start: 'Adjust the Booking Lead Time, then tap the button above.',
+  start: 'Adjust the settings, then tap the button above.',
 };
 
 var BookingAgent = {
