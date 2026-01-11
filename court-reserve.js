@@ -195,7 +195,7 @@ var css = /*css*/`
     bottom: 20vw;
     left: 24vw;
     width: auto;
-    height: auto;
+    height: 14vw;
     background: rgba(224,224,224,0.95);
     border: none;
     border-radius: 2vw;
