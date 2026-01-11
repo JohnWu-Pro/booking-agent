@@ -208,6 +208,7 @@ var css = /*css*/`
     padding: 0 3vw;
     display: block;
     font: normal 12vw 'Digital-7 Mono', sans-serif;
+    margin-top: -1.8vw;
     cursor: pointer;
   }
 
