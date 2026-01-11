@@ -110,47 +110,55 @@ window.Timer = Timer;
 class Settings {
   static #key = 'court-reserve.booking-agent.settings'
 
+  #defaults
   #$elements
-  #default
-  #value
+  #values
 
-  constructor(selectors, defaultValue) {
-    this.#$elements = {};
-    for(const [key, selector] of Object.entries(selectors)) {
-      this.#$elements[key] = $E(selector);
+  constructor(selectors, defaults) {
+    const $elements = {};
+    for(const [key, _] of Object.entries(defaults)) {
+      $elements[key] = $E(selectors[key]);
     }
-    this.#default = defaultValue;
+
+    this.#defaults = defaults;
+    this.#$elements = $elements;
   }
 
-  get value() { return {...this.#value}; }
+  get values() { return {...this.#values}; }
 
   load() {
     const item = localStorage.getItem(Settings.#key);
-    const object = item ? JSON.parse(item) : {};
-    this.#value = {...this.#default, ...object};
+    const loaded = item ? JSON.parse(item) : {};
+
+    const values = {}
+    for(const [key, _default] of Object.entries(this.#defaults)) {
+      values[key] = loaded[key] ?? _default;
+    }
+
+    this.#values = values;
   }
 
-  resolveValue() {
-    for(const [key, element] of Object.entries(this.#$elements)) {
-      const _default = this.#default[key];
+  resolveValues() {
+    for(const [key, _default] of Object.entries(this.#defaults)) {
+      const element = this.#$elements[key];
       let value = element.value;
       if(value) {
         if(isNumber(_default)) value = Number(value);
       } else {
         value = _default;
       }
-      this.#value[key] = value;
+      this.#values[key] = value;
     }
   }
 
-  updateElement() {
-    for(const [key, value] of Object.entries(this.#value)) {
+  updateElements() {
+    for(const [key, value] of Object.entries(this.#values)) {
       this.#$elements[key].value = value;
     }
   }
 
   save() {
-    localStorage.setItem(Settings.#key, JSON.stringify(this.#value));
+    localStorage.setItem(Settings.#key, JSON.stringify(this.#values));
   }
 }
 window.Settings = Settings;
@@ -191,6 +199,7 @@ var css = /*css*/`
     background: rgba(224,224,224,0.95);
     border: none;
     border-radius: 2vw;
+    align-items: center; /* vertically */
     z-index: 9000;
   }
 
@@ -260,7 +269,7 @@ var css = /*css*/`
     margin-top: 8px;
   }
   .booking-agent .input-panel label {
-    width: 48vw;
+    width: 52vw;
     font-weight: normal;
   }
   .booking-agent .input-panel input {
@@ -418,7 +427,7 @@ var BookingAgent = {
       const { bookableNow, triggeringDateTime } = state;
       if(bookableNow) return;
 
-      $E(this.selector).style.display = 'block';
+      $E(this.selector).style.display = 'flex';
       this.timer.tickDown(triggeringDateTime);
     },
 
@@ -438,7 +447,7 @@ var BookingAgent = {
       $E('.booking-agent .dialog').style.display = 'block';
 
       BookingAgent.settings.load();
-      BookingAgent.settings.updateElement();
+      BookingAgent.settings.updateElements();
 
       this.update();
 
@@ -447,8 +456,8 @@ var BookingAgent = {
 
     update: function() {
       // Based on settings and input form to update button label
-      const form = new FormData($E('form#createReservation-Form'));
-      BookingAgent.state = BookingAgent.resolveState(form, BookingAgent.settings.value);
+      const form = BookingAgent.getFormData();
+      BookingAgent.state = BookingAgent.resolveState(form, BookingAgent.settings.values);
       // console.debug('[DEBUG] BookingAgent.state: %o', BookingAgent.state);
 
       const { bookableNow, triggeringDateTime } = BookingAgent.state;
@@ -491,13 +500,24 @@ var BookingAgent = {
   },
 
   onUpdateSettings: function() {
-    this.settings.resolveValue();
+    this.settings.resolveValues();
     this.dialog.update();
+  },
+
+  getFormData: function() {
+    return new FormData($E('form#createReservation-Form'));
+  },
+
+  resolveSelectedCourt: function(form) {
+    if(!form) form = this.getFormData();
+
+    const courtId = form.get('CourtId');
+    return (courtId && courtId.length >= 5) ? courtId.at(-1) : undefined;
   },
 
   resolveState: function(form, settings) {
     function resolveCourtsToTry(selectedCourt, preferredCourts) {
-      // console.debug('[DEBUG] selectedCourt: %o, preferredCourts: %o', selectedCourt, preferredCourts);
+      console.debug('[DEBUG] selectedCourt: %o, preferredCourts: %o', selectedCourt, preferredCourts);
       const courts = (!preferredCourts || preferredCourts === 'none')
         ? []
         : preferredCourts.split(',').map(s => s.trim()).filter(s => /^\d+$/.test(s))
@@ -506,10 +526,10 @@ var BookingAgent = {
       return courts.filter(s => s !== selectedCourt);
     }
 
-    // console.debug('[DEBUG] form: %o', Object.fromEntries(form));
+    console.debug('[DEBUG] form: %o', Object.fromEntries(form));
     const date = form.get('Date');
     const time = form.get('StartTime');
-    const selectedCourt = form.get('CourtId').at(-1);
+    const selectedCourt = this.resolveSelectedCourt(form);
 
     const selectedReservationDateTime = new Date(`${date.substring(0,10)} ${time}`);
 
@@ -523,7 +543,6 @@ var BookingAgent = {
     const courtsToTry = bookableNow ? [] : resolveCourtsToTry(selectedCourt, preferredCourts);
 
     return {
-      selectedCourt,
       selectedReservationDateTime,
       triggeringDateTime,
       bookableNow,
@@ -596,7 +615,7 @@ var BookingAgent = {
 
       this.dashboard.hide();
 
-      if(this.state.selectedCourt) {
+      if(this.resolveSelectedCourt()) {
         await this.confirmAndRetry();
       } else if(await this.selectNextPreferredCourt()) {
         await this.confirmAndRetry();
@@ -640,7 +659,7 @@ var BookingAgent = {
         await delay(100);
         const button = $E(selectors.confirmButton);
         if(button) {
-          if(button.innerHTML.includes('<span class="btn-active-spinner"></span>')) {
+          if(button.innerHTML.includes('<span class="btn-active-spinner">')) {
             console.debug('[DEBUG] Confirm button is spinning ...');
             continue;
           } else if($E(selectors.errorDialog)) {
