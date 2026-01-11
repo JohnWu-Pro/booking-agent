@@ -517,7 +517,7 @@ var BookingAgent = {
 
   resolveState: function(form, settings) {
     function resolveCourtsToTry(selectedCourt, preferredCourts) {
-      console.debug('[DEBUG] selectedCourt: %o, preferredCourts: %o', selectedCourt, preferredCourts);
+      // console.debug('[DEBUG] selectedCourt: %o, preferredCourts: %o', selectedCourt, preferredCourts);
       const courts = (!preferredCourts || preferredCourts === 'none')
         ? []
         : preferredCourts.split(',').map(s => s.trim()).filter(s => /^\d+$/.test(s))
@@ -526,7 +526,7 @@ var BookingAgent = {
       return courts.filter(s => s !== selectedCourt);
     }
 
-    console.debug('[DEBUG] form: %o', Object.fromEntries(form));
+    // console.debug('[DEBUG] form: %o', Object.fromEntries(form));
     const date = form.get('Date');
     const time = form.get('StartTime');
     const selectedCourt = this.resolveSelectedCourt(form);
@@ -664,7 +664,7 @@ var BookingAgent = {
             continue;
           } else if($E(selectors.errorDialog)) {
             console.debug('[DEBUG] Confirm button is normal, error dialog shows up.');
-            const message = $E(selectors.errorMessage);
+            const message = $E(selectors.errorMessage)?.innerText || '';
             if(message.match(/^(?<name>.+) is only allowed to reserve up to (?<time>.+)$/)) {
               return 'reservationNotOpenYet'
             } else if(message.match(/^(?<court>.+) no longer available.$/)) {
@@ -676,7 +676,7 @@ var BookingAgent = {
             console.debug('[DEBUG] Confirm button is normal, waiting for error dialog ...');
             continue;
           }
-        } else if($E(selectors.pageTitle).innerText === 'Expanded') {
+        } else if($E(selectors.pageTitle)?.innerText === 'Expanded') {
           console.debug('[DEBUG] Confirm button not exists, navigated to Expanded page.');
           return 'succeeded';
         } else {
