@@ -635,6 +635,7 @@ var BookingAgent = {
       triggeringDateTime,
       bookableNow,
       courtsToTry,
+      courtsTried: [],
     };
   },
 
@@ -795,15 +796,16 @@ var BookingAgent = {
         break;
       case 'courtNoLongerAvailable':
         $E(selectors.errorDialogOkButton).click();
+        this.state.courtsTried.push(this.resolveSelectedCourt());
         if(await this.selectNextPreferredCourt()) {
           await this.confirmAndRetry();
         } else {
-          this.messageOverlay.show('info', 'No more court to try!');
+          this.messageOverlay.show('info', `Tried court(s) ${this.state.courtsTried.join(',')}, but no luck 😔`);
         }
         break;
       case 'succeeded':
         console.info('[INFO] Succeeded in confirming the booking.');
-        this.messageOverlay.show('success', 'Booking is confirmed.');
+        this.messageOverlay.show('success', 'Booking is confirmed ☺️');
         break;
       default: // nonRetryableError
         console.error('[ERROR] A non-retryable error is encountered.');
