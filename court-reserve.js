@@ -208,22 +208,21 @@ var css = /*css*/`
     padding: 0 3vw;
     display: block;
     font: normal 12vw 'Digital-7 Mono', sans-serif;
-    margin-top: -1.8vw;
     cursor: pointer;
   }
 
-  .booking-agent > .backdrop {
+  .booking-agent > .settings-backdrop {
     display: none;
     position: fixed;
     left: 0;
     top: 0;
     height: 100%;
     width: 100%;
-    background: rgba(224,224,224,0.4);
+    background: rgba(0,0,0,0.4);
     z-index: 9001;
   }
 
-  .booking-agent > .dialog {
+  .booking-agent > .settings-dialog {
     display: none;
     position: fixed;
     left: 2vw;
@@ -309,40 +308,90 @@ var css = /*css*/`
     cursor: default;
   }
 
-  .booking-agent .msg-panel {
+  .booking-agent .prompt-panel {
     background: rgb(224,224,255);
     padding: 0 0 0 6px;
+    font-size: medium;
     font-weight: bold;
     text-align: left;
   }
 
-  .booking-agent .msg-panel > .success {
+  .booking-agent .prompt-panel > .success {
     color: green;
   }
 
-  .booking-agent .msg-panel > .error {
+  .booking-agent .prompt-panel > .error {
     color: red;
   }
 
-  .booking-agent .msg-panel > .info {
+  .booking-agent .prompt-panel > .info {
     color: blue;
+  }
+
+  .booking-agent > .message-backdrop {
+    display: none;
+    position: fixed;
+    left: 0;
+    top: 0;
+    height: 100%;
+    width: 100%;
+    background: rgba(0,0,0,0.4);
+    z-index: 9008;
+  }
+
+  .booking-agent > .message-overlay {
+    display: none;
+    position: fixed;
+    left: 2vw;
+    bottom: 20vw;
+    width: 96vw;
+    background: white;
+    border: 1px outset lightgrey;
+    border-radius: 3px;
+    z-index: 9009;
+  }
+
+  .booking-agent .message-panel {
+    padding: 4px 8px;
+    text-align: left;
+  }
+
+  .booking-agent .message-panel .success {
+    color: green;
+  }
+  .booking-agent .message-panel .success::before {
+    content: '✅';
+  }
+
+  .booking-agent .message-panel .error {
+    color: red;
+  }
+  .booking-agent .message-panel .error::before {
+    content: '❌';
+  }
+
+  .booking-agent .message-panel .info {
+    color: blue;
+  }
+  .booking-agent .message-panel .info::before {
+    content: 'ℹ️';
   }
 `;
 
 var html = /*html*/`
   <div class="menu">
-    <div class="menu-icon" onclick="BookingAgent.dialog.open()"></div>
+    <div class="menu-icon" onclick="BookingAgent.onShowSettings()"></div>
   </div>
   <div class="dashboard">
     <div class="timer"></div>
   </div>
-  <div class="backdrop"></div>
-  <div class="dialog">
+  <div class="settings-backdrop"></div>
+  <div class="settings-dialog">
     <div class="header-panel">
       <div class="title">Booking Agent</div>
       <div class="ctrl">
         <div class="ctrl-btn help" onclick="window.open('https://johnwu-pro.github.io/booking-agent/index.html?section=overview')">ⓘ</div>
-        <div class="ctrl-btn close" onclick="BookingAgent.dialog.close()">✕</div>
+        <div class="ctrl-btn close" onclick="BookingAgent.settingsDialog.close()">✕</div>
       </div>
     </div>
     <div class="input-panel">
@@ -373,13 +422,22 @@ var html = /*html*/`
     <div class="cmd-panel">
       <button type="button" id="scheduleBooking" class="cmd" onclick="BookingAgent.scheduleBooking()">Schedule Booking</button>
     </div>
-    <div class="msg-panel">
+    <div class="prompt-panel">
       <span class="info"></span>
+    </div>
+  </div>
+  <div class="message-backdrop"></div>
+  <div class="message-overlay">
+    <div class="message-panel">
+      <span id="message"></span>
+    </div>
+    <div class="cmd-panel">
+      <button type="button" class="cmd" onclick="BookingAgent.messageOverlay.close()">Close</button>
     </div>
   </div>
 `;
 
-var messages = {
+var prompts = {
   start: 'Adjust the settings, then tap the button above.',
 };
 
@@ -439,12 +497,12 @@ var BookingAgent = {
     },
   },
 
-  dialog: {
+  settingsDialog: {
     open: function() {
       BookingAgent.stop();
 
-      $E('.booking-agent .backdrop').style.display = 'block';
-      $E('.booking-agent .dialog').style.display = 'block';
+      $E('.booking-agent .settings-backdrop').style.display = 'block';
+      $E('.booking-agent .settings-dialog').style.display = 'block';
 
       BookingAgent.settings.load();
       BookingAgent.settings.updateElements();
@@ -455,9 +513,7 @@ var BookingAgent = {
     },
 
     update: function() {
-      // Based on settings and input form to update button label
-      const form = BookingAgent.getFormData();
-      BookingAgent.state = BookingAgent.resolveState(form, BookingAgent.settings.values);
+      BookingAgent.state = BookingAgent.resolveState(BookingAgent.settings.values);
       // console.debug('[DEBUG] BookingAgent.state: %o', BookingAgent.state);
 
       const { bookableNow, triggeringDateTime } = BookingAgent.state;
@@ -465,12 +521,28 @@ var BookingAgent = {
         ? 'Book Now'
         : 'Schedule Booking at' + '<br>' + toDateTimeStringWithoutTz(triggeringDateTime);
 
-      $E('.booking-agent .msg-panel > span').innerText = messages.start;
+      $E('.booking-agent .prompt-panel > span').innerText = prompts.start;
     },
 
     close: function() {
-      $E('.booking-agent .backdrop').style.display = 'none';
-      $E('.booking-agent .dialog').style.display = 'none';
+      $E('.booking-agent .settings-backdrop').style.display = 'none';
+      $E('.booking-agent .settings-dialog').style.display = 'none';
+    },
+  },
+
+  messageOverlay: {
+    show: function(type /* error | info | success */, message) {
+      $E('.booking-agent .message-backdrop').style.display = 'block';
+      $E('.booking-agent .message-overlay').style.display = 'block';
+
+      const element = $E('span#message');
+      element.className = type;
+      element.innerText = message;
+    },
+
+    close: function() {
+      $E('.booking-agent .message-backdrop').style.display = 'none';
+      $E('.booking-agent .message-overlay').style.display = 'none';
     },
   },
 
@@ -499,9 +571,21 @@ var BookingAgent = {
     }
   },
 
+  onShowSettings: function() {
+    try {
+      this.settingsDialog.open();
+    } catch(error) {
+      this.messageOverlay.show('error', error);
+    }
+  },
+
   onUpdateSettings: function() {
-    this.settings.resolveValues();
-    this.dialog.update();
+    try {
+      this.settings.resolveValues();
+      this.settingsDialog.update();
+    } catch(error) {
+      this.messageOverlay.show('error', error);
+    }
   },
 
   getFormData: function() {
@@ -515,7 +599,7 @@ var BookingAgent = {
     return (courtId && courtId.length >= 5) ? courtId.at(-1) : undefined;
   },
 
-  resolveState: function(form, settings) {
+  resolveState: function(settings) {
     function resolveCourtsToTry(selectedCourt, preferredCourts) {
       // console.debug('[DEBUG] selectedCourt: %o, preferredCourts: %o', selectedCourt, preferredCourts);
       const courts = (!preferredCourts || preferredCourts === 'none')
@@ -526,6 +610,7 @@ var BookingAgent = {
       return courts.filter(s => s !== selectedCourt);
     }
 
+    const form = this.getFormData();
     // console.debug('[DEBUG] form: %o', Object.fromEntries(form));
     const date = form.get('Date');
     const time = form.get('StartTime');
@@ -596,36 +681,45 @@ var BookingAgent = {
   },
 
   scheduleBooking: function() {
-    this.settings.save();
-    this.dialog.close();
-    this.dashboard.show(this.state);
+    try {
+      this.settings.save();
+      this.settingsDialog.close();
+      this.dashboard.show(this.state);
 
-    this.stopScheduler();
+      this.stopScheduler();
 
-    // Triggering/Scheduling booking confirmation
-    const { bookableNow, triggeringDateTime } = this.state;
-    const millis = bookableNow ? 0 : triggeringDateTime.getTime() - Date.now();
-    this.status = 'Scheduled';
-    this.scheduler = setTimeout(() => this.triggerBooking(), millis);
+      // Triggering/Scheduling booking confirmation
+      const { bookableNow, triggeringDateTime } = this.state;
+      const millis = bookableNow ? 0 : triggeringDateTime.getTime() - Date.now();
+      this.status = 'Scheduled';
+      this.scheduler = setTimeout(() => this.triggerBooking(), millis);
+    } catch(error) {
+      this.messageOverlay.show('error', error);
+    }
   },
 
   triggerBooking: async function() {
-    if(this.status === 'Scheduled') {
-      this.status = 'Booking';
+    try {
+      if(this.status === 'Scheduled') {
+        this.status = 'Booking';
 
-      this.dashboard.hide();
+        this.dashboard.hide();
 
-      if(this.resolveSelectedCourt()) {
-        await this.confirmAndRetry();
-      } else if(await this.selectNextPreferredCourt()) {
-        await this.confirmAndRetry();
+        if(this.resolveSelectedCourt()) {
+          await this.confirmAndRetry();
+        } else if(await this.selectNextPreferredCourt()) {
+          await this.confirmAndRetry();
+        }
+
+        this.status = 'Booked';
       }
-
-      this.status = 'Booked';
+    } catch(error) {
+      this.messageOverlay.show('error', error);
     }
   },
 
   confirmAndRetry: async function() {
+    // console.debug('[DEBUG] Confirming book court #%s ...', this.resolveSelectedCourt());
     const selectors = {
       pageTitle: 'span.page-title',
       confirmButton: 'button[data-testid="Confirm"]',
@@ -660,10 +754,10 @@ var BookingAgent = {
         const button = $E(selectors.confirmButton);
         if(button) {
           if(button.innerHTML.includes('<span class="btn-active-spinner">')) {
-            console.debug('[DEBUG] Confirm button is spinning ...');
+            // console.debug('[DEBUG] Confirm button is spinning ...');
             continue;
           } else if($E(selectors.errorDialog)) {
-            console.debug('[DEBUG] Confirm button is normal, error dialog shows up.');
+            // console.debug('[DEBUG] Confirm button is normal, error dialog shows up.');
             const message = $E(selectors.errorMessage)?.innerText || '';
             if(message.match(/^(?<name>.+) is only allowed to reserve up to (?<time>.+)$/)) {
               return 'reservationNotOpenYet'
@@ -673,14 +767,14 @@ var BookingAgent = {
               return 'nonRetryableError'
             }
           } else {
-            console.debug('[DEBUG] Confirm button is normal, waiting for error dialog ...');
+            // console.debug('[DEBUG] Confirm button is normal, waiting for error dialog ...');
             continue;
           }
         } else if($E(selectors.pageTitle)?.innerText === 'Expanded') {
-          console.debug('[DEBUG] Confirm button not exists, navigated to Expanded page.');
+          // console.debug('[DEBUG] Confirm button not exists, navigated to Expanded page.');
           return 'succeeded';
         } else {
-          console.debug('[DEBUG] Confirm button not exists, waiting for navigation to Expanded page ...');
+          // console.debug('[DEBUG] Confirm button not exists, waiting for navigation to Expanded page ...');
           continue;
         }
       }
