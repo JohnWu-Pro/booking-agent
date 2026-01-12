@@ -358,6 +358,7 @@ var css = /*css*/`
 
   .booking-agent .message-panel .success {
     color: green;
+    display: inline;
   }
   .booking-agent .message-panel .success::before {
     content: '✅';
@@ -365,6 +366,7 @@ var css = /*css*/`
 
   .booking-agent .message-panel .error {
     color: red;
+    display: inline;
   }
   .booking-agent .message-panel .error::before {
     content: '❌';
@@ -372,6 +374,7 @@ var css = /*css*/`
 
   .booking-agent .message-panel .info {
     color: blue;
+    display: inline;
   }
   .booking-agent .message-panel .info::before {
     content: 'ℹ️';
@@ -760,10 +763,13 @@ var BookingAgent = {
             // console.debug('[DEBUG] Confirm button is normal, error dialog shows up.');
             const message = $E(selectors.errorMessage)?.innerText || '';
             if(message.match(/^(?<name>.+) is only allowed to reserve up to (?<time>.+)$/)) {
+              // console.debug('[DEBUG] reservationNotOpenYet');
               return 'reservationNotOpenYet'
             } else if(message.match(/^(?<court>.+) no longer available.$/)) {
+              // console.debug('[DEBUG] courtNoLongerAvailable');
               return 'courtNoLongerAvailable'
             } else {
+              // console.debug('[DEBUG] nonRetryableError');
               return 'nonRetryableError'
             }
           } else {
@@ -791,10 +797,13 @@ var BookingAgent = {
         $E(selectors.errorDialogOkButton).click();
         if(await this.selectNextPreferredCourt()) {
           await this.confirmAndRetry();
+        } else {
+          this.messageOverlay.show('info', 'No more court to try!');
         }
         break;
       case 'succeeded':
         console.info('[INFO] Succeeded in confirming the booking.');
+        this.messageOverlay.show('success', 'Booking is confirmed.');
         break;
       default: // nonRetryableError
         console.error('[ERROR] A non-retryable error is encountered.');
