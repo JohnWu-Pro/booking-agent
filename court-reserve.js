@@ -800,7 +800,7 @@ var BookingAgent = {
         if(await this.selectNextPreferredCourt()) {
           await this.confirmAndRetry();
         } else {
-          this.messageOverlay.show('info', `Tried court(s) ${this.state.courtsTried.join(',')}, but no luck 😔`);
+          this.messageOverlay.show('info', `Tried court(s) ${this.state.courtsTried.join(', ')}, but no luck 😔`);
         }
         break;
       case 'succeeded':
