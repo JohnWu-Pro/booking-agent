@@ -826,7 +826,7 @@ var BookingAgent = {
       return false; // court not found
     }
 
-    $E('span[aria-controls="CourtId_listbox"]').click();
+    $E('input#CourtId').parentElement.click();
     await delay(100);
 
     const options = $A('div.dynamic-ul-CourtId li[role="option"]');
