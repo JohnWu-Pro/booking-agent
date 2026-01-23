@@ -29,6 +29,13 @@ function delay(millis, value) {
   return new Promise(resolve => setTimeout(() => resolve(value), millis));
 }
 
+function toTimeStringWithoutTz(datetime) {
+  const value = new Date(datetime);
+  value.setMinutes(value.getMinutes() - value.getTimezoneOffset());
+  return value.toISOString().substring(11,19)
+      + '.' + value.getMilliseconds().toString().padStart(3, '0');
+}
+
 function toDateTimeStringWithoutTz(datetime) {
   const value = new Date(datetime);
   value.setMinutes(value.getMinutes() - value.getTimezoneOffset());
@@ -379,6 +386,43 @@ var css = /*css*/`
   .booking-agent .message-panel .info::before {
     content: 'ℹ️';
   }
+
+  .booking-agent > .logs-backdrop {
+    display: none;
+    position: fixed;
+    left: 0;
+    top: 0;
+    height: 100%;
+    width: 100%;
+    background: rgba(0,0,0,0.4);
+    z-index: 9003;
+  }
+
+  .booking-agent > .logs-overlay {
+    display: none;
+    position: fixed;
+    left: 1vw;
+    bottom: 20vw;
+    width: 98vw;
+    background: white;
+    border: 1px outset lightgrey;
+    border-radius: 3px;
+    z-index: 9004;
+  }
+
+  .booking-agent .logs-panel {
+    height: 80vh;
+    overflow: scroll;
+    margin: 0 2px;
+  }
+
+  .booking-agent .logs-panel > .log-entry {
+    text-align: left;
+  }
+  .booking-agent .logs-panel > .log-entry:nth-of-type(even) {
+    background: rgb(240,240,255);
+  }
+
 `;
 
 var html = /*html*/`
@@ -393,6 +437,7 @@ var html = /*html*/`
     <div class="header-panel">
       <div class="title">Booking Agent</div>
       <div class="ctrl">
+        <div class="ctrl-btn log" onclick="BookingAgent.logs.open()">📄</div>
         <div class="ctrl-btn help" onclick="window.open('https://johnwu-pro.github.io/booking-agent/index.html?section=overview')">ⓘ</div>
         <div class="ctrl-btn close" onclick="BookingAgent.settingsDialog.close()">✕</div>
       </div>
@@ -425,6 +470,14 @@ var html = /*html*/`
     </div>
     <div class="cmd-panel">
       <button type="button" class="cmd" onclick="BookingAgent.messageOverlay.close()">Close</button>
+    </div>
+  </div>
+  <div class="logs-backdrop"></div>
+  <div class="logs-overlay">
+    <div class="logs-panel" onclick="BookingAgent.logs.copyToClipboard()">
+    </div>
+    <div class="cmd-panel">
+      <button type="button" class="cmd" onclick="BookingAgent.logs.close()">Close</button>
     </div>
   </div>
 `;
@@ -523,7 +576,7 @@ var BookingAgent = {
   },
 
   messageOverlay: {
-    show: function(type /* error | info | success */, message) {
+    open: function(type /* error | info | success */, message) {
       $E('.booking-agent .message-backdrop').style.display = 'block';
       $E('.booking-agent .message-overlay').style.display = 'block';
 
@@ -535,6 +588,32 @@ var BookingAgent = {
     close: function() {
       $E('.booking-agent .message-backdrop').style.display = 'none';
       $E('.booking-agent .message-overlay').style.display = 'none';
+    },
+  },
+
+  logs: {
+    selector: '.booking-agent .logs-panel',
+    messages: [],
+
+    clear: function() {
+      this.messages = []
+      $E(this.selector).innerHTML = '';
+    },
+    append: function(message) {
+      this.messages.push(`${toTimeStringWithoutTz(new Date())} - ${message}`);
+    },
+    open: function() {
+      $E('.booking-agent .logs-backdrop').style.display = 'block';
+      $E('.booking-agent .logs-overlay').style.display = 'block';
+
+      $E(this.selector).innerHTML = this.messages.map(msg => /*html*/`<div class="log-entry">${msg}</div>`).join('');
+    },
+    close: function() {
+      $E('.booking-agent .logs-backdrop').style.display = 'none';
+      $E('.booking-agent .logs-overlay').style.display = 'none';
+    },
+    copyToClipboard: function() {
+      navigator.clipboard.writeText(this.messages.join('\n'));
     },
   },
 
@@ -567,7 +646,7 @@ var BookingAgent = {
     try {
       this.settingsDialog.open();
     } catch(error) {
-      this.messageOverlay.show('error', error);
+      this.messageOverlay.open('error', error);
     }
   },
 
@@ -576,7 +655,7 @@ var BookingAgent = {
       this.settings.resolveValues();
       this.settingsDialog.update();
     } catch(error) {
-      this.messageOverlay.show('error', error);
+      this.messageOverlay.open('error', error);
     }
   },
 
@@ -687,7 +766,7 @@ var BookingAgent = {
       this.status = 'Scheduled';
       this.scheduler = setTimeout(() => this.triggerBooking(), millis);
     } catch(error) {
-      this.messageOverlay.show('error', error);
+      this.messageOverlay.open('error', error);
     }
   },
 
@@ -697,22 +776,27 @@ var BookingAgent = {
         this.status = 'Booking';
 
         this.dashboard.hide();
+        this.state.triedCount = 0;
+        this.logs.clear();
 
         if(this.resolveSelectedCourt()) {
           await this.confirmAndRetry();
         } else if(await this.selectNextPreferredCourt()) {
+          const court = this.resolveSelectedCourt();
+          this.logs.append(`[INFO] Selected next preferred court #${court}.`);
           await this.confirmAndRetry();
         }
 
         this.status = 'Booked';
       }
     } catch(error) {
-      this.messageOverlay.show('error', error);
+      this.logs.append(`[ERROR] ${error}`);
+      this.messageOverlay.open('error', error);
     }
   },
 
   confirmAndRetry: async function() {
-    // console.debug('[DEBUG] Confirming book court #%s ...', this.resolveSelectedCourt());
+    this.logs.append(`[DEBUG] Confirming book court #${this.resolveSelectedCourt()} ...`);
     const selectors = {
       pageTitle: 'span.page-title',
       confirmButton: 'button[data-testid="Confirm"]',
@@ -721,7 +805,7 @@ var BookingAgent = {
       errorDialogOkButton: 'button.swal2-confirm'
     };
 
-    async function waitForCompletion() {
+    const waitForCompletion = async () => {
       // When in-progress,
       //   confirm button innerHTML: ... <span class="btn-active-spinner"></span>
       // When done with error
@@ -744,38 +828,41 @@ var BookingAgent = {
       // -- up to 2 reservations
       // -- no available courts
       // Sorry, no available courts for the time requested.
-      while (true) {
+      for ( ; this.state.triedCount < 100; this.state.triedCount++) {
         await delay(100);
         const button = $E(selectors.confirmButton);
         if(button) {
           if(button.innerHTML.includes('<span class="btn-active-spinner">')) {
-            // console.debug('[DEBUG] Confirm button is spinning ...');
+            this.logs.append('[DEBUG] Confirm button is spinning ...');
             continue;
           } else if($E(selectors.errorDialog)) {
-            // console.debug('[DEBUG] Confirm button is normal, error dialog shows up.');
+            this.logs.append('[DEBUG] Confirm button is normal, error dialog shows up.');
             const message = $E(selectors.errorMessage)?.innerText || '';
+            this.logs.append(`[ERROR] ${message}`);
             if(message.match(/^(?<name>.+) is only allowed to reserve up to (?<time>.+)$/)) {
-              // console.debug('[DEBUG] reservationNotOpenYet');
+              this.logs.append('[DEBUG] reservationNotOpenYet');
               return 'reservationNotOpenYet'
             } else if(message.match(/^(?<court>.+) no longer available.$/)) {
-              // console.debug('[DEBUG] courtNoLongerAvailable');
+              this.logs.append('[DEBUG] courtNoLongerAvailable');
               return 'courtNoLongerAvailable'
             } else {
-              // console.debug('[DEBUG] nonRetryableError');
+              this.logs.append('[DEBUG] nonRetryableError');
               return 'nonRetryableError'
             }
           } else {
-            // console.debug('[DEBUG] Confirm button is normal, waiting for error dialog ...');
+            this.logs.append('[DEBUG] Confirm button is normal, waiting for error dialog ...');
             continue;
           }
         } else if($E(selectors.pageTitle)?.innerText === 'Expanded') {
-          // console.debug('[DEBUG] Confirm button not exists, navigated to Expanded page.');
+          this.logs.append('[DEBUG] Confirm button not exists, navigated to Expanded page.');
           return 'succeeded';
         } else {
-          // console.debug('[DEBUG] Confirm button not exists, waiting for navigation to Expanded page ...');
+          this.logs.append('[DEBUG] Confirm button not exists, waiting for navigation to Expanded page ...');
           continue;
         }
       }
+
+      return 'triedTooManyTimes';
     }
 
     $E(selectors.confirmButton).click();
@@ -789,17 +876,24 @@ var BookingAgent = {
         $E(selectors.errorDialogOkButton).click();
         this.state.courtsTried.push(this.resolveSelectedCourt());
         if(await this.selectNextPreferredCourt()) {
+          const court = this.resolveSelectedCourt();
+          this.logs.append(`[INFO] Selected next preferred court #${court}.`);
           await this.confirmAndRetry();
         } else {
-          this.messageOverlay.show('info', `Tried court(s) ${this.state.courtsTried.join(', ')}, but no luck 😔`);
+          this.logs.append(`[INFO] Tried court(s) ${this.state.courtsTried.join(', ')}, but no luck 😔`);
+          this.messageOverlay.open('info', `Tried court(s) ${this.state.courtsTried.join(', ')}, but no luck 😔`);
         }
         break;
       case 'succeeded':
-        console.info('[INFO] Succeeded in confirming the booking.');
-        this.messageOverlay.show('success', 'Booking is confirmed ☺️');
+        this.logs.append('[INFO] Booking is confirmed ☺️');
+        this.messageOverlay.open('success', 'Booking is confirmed ☺️');
+        break;
+      case 'triedTooManyTimes':
+        this.logs.append('[ERROR] Tried too many times.');
+        this.messageOverlay.open('error', 'Tried too many times.');
         break;
       default: // nonRetryableError
-        console.error('[ERROR] A non-retryable error is encountered.');
+        this.logs.append('[ERROR] A non-retryable error is encountered.');
     }
   },
 
