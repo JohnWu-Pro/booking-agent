@@ -400,22 +400,11 @@ var html = /*html*/`
     <div class="input-panel">
       <div>
         <label for="reservationLeadDays">Reservation Lead Days:</label>
-        <input name="reservationLeadDays" type="number" onchange="BookingAgent.onUpdateSettings()">
+        <input name="reservationLeadDays" type="number" min="0" onchange="BookingAgent.onUpdateSettings()">
       </div>
       <div>
-        <label for="bookingLeadTimeMillis">Booking Lead Time:</label>
-        <select name="bookingLeadTimeMillis" onchange="BookingAgent.onUpdateSettings()">
-          <option value="0">0</option>
-          <option value="100">100ms</option>
-          <option value="200">200ms</option>
-          <option value="300">300ms</option>
-          <option value="500">500ms</option>
-          <option value="600">600ms</option>
-          <option value="700">700ms</option>
-          <option value="800">800ms</option>
-          <option value="900">900ms</option>
-          <option value="1000">1s</option>
-        </select>
+        <label for="bookingLeadTimeMillis">Booking Lead Time (ms):</label>
+        <input name="bookingLeadTimeMillis" type="number" min="0" step="100" onchange="BookingAgent.onUpdateSettings()">
       </div>
       <div>
         <label for="preferredCourts">Preferred Courts:</label>
@@ -649,7 +638,7 @@ var BookingAgent = {
 
     this.settings = new Settings({
       reservationLeadDays: 'input[name="reservationLeadDays"]',
-      bookingLeadTimeMillis: 'select[name="bookingLeadTimeMillis"]',
+      bookingLeadTimeMillis: 'input[name="bookingLeadTimeMillis"]',
       preferredCourts: 'input[name="preferredCourts"]',
     }, this.defaultSettings);
 
@@ -753,6 +742,8 @@ var BookingAgent = {
       // Singles requires 1 additional player.
       // -- 2 hours interval
       // -- up to 2 reservations
+      // -- no available courts
+      // Sorry, no available courts for the time requested.
       while (true) {
         await delay(100);
         const button = $E(selectors.confirmButton);
