@@ -275,11 +275,11 @@ var css = /*css*/`
     margin-top: 8px;
   }
   .booking-agent .input-panel label {
-    width: 52vw;
+    width: 64vw;
     font-weight: normal;
   }
   .booking-agent .input-panel input {
-    width: 36vw;
+    width: 24vw;
     border: 1px inset lightgrey;
     border-radius: 3px;
     padding-left: 4px;
@@ -411,12 +411,13 @@ var css = /*css*/`
   }
 
   .booking-agent .logs-panel {
-    height: 80vh;
-    overflow: scroll;
+    height: 72vh;
+    overflow: auto;
     margin: 0 2px;
   }
 
   .booking-agent .logs-panel > .log-entry {
+    font-size: small;
     text-align: left;
   }
   .booking-agent .logs-panel > .log-entry:nth-of-type(even) {
@@ -474,10 +475,13 @@ var html = /*html*/`
   </div>
   <div class="logs-backdrop"></div>
   <div class="logs-overlay">
-    <div class="logs-panel" onclick="BookingAgent.logs.copyToClipboard()">
+    <div class="header-panel">
+      <div class="title">Logs</div>
+      <div class="ctrl">
+        <div class="ctrl-btn close" onclick="BookingAgent.logs.close()">✕</div>
+      </div>
     </div>
-    <div class="cmd-panel">
-      <button type="button" class="cmd" onclick="BookingAgent.logs.close()">Close</button>
+    <div class="logs-panel" onclick="BookingAgent.logs.copyToClipboard()">
     </div>
   </div>
 `;
@@ -796,7 +800,7 @@ var BookingAgent = {
   },
 
   confirmAndRetry: async function() {
-    this.logs.append(`[DEBUG] Confirming book court #${this.resolveSelectedCourt()} ...`);
+    this.logs.append(`[DEBUG] Trying to book court #${this.resolveSelectedCourt()} ...`);
     const selectors = {
       pageTitle: 'span.page-title',
       confirmButton: 'button[data-testid="Confirm"]',
@@ -833,20 +837,17 @@ var BookingAgent = {
         const button = $E(selectors.confirmButton);
         if(button) {
           if(button.innerHTML.includes('<span class="btn-active-spinner">')) {
-            this.logs.append('[DEBUG] Confirm button is spinning ...');
+            // this.logs.append('[DEBUG] Confirm button is spinning ...');
             continue;
           } else if($E(selectors.errorDialog)) {
-            this.logs.append('[DEBUG] Confirm button is normal, error dialog shows up.');
             const message = $E(selectors.errorMessage)?.innerText || '';
             this.logs.append(`[ERROR] ${message}`);
+
             if(message.match(/^(?<name>.+) is only allowed to reserve up to (?<time>.+)$/)) {
-              this.logs.append('[DEBUG] reservationNotOpenYet');
               return 'reservationNotOpenYet'
             } else if(message.match(/^(?<court>.+) no longer available.$/)) {
-              this.logs.append('[DEBUG] courtNoLongerAvailable');
               return 'courtNoLongerAvailable'
             } else {
-              this.logs.append('[DEBUG] nonRetryableError');
               return 'nonRetryableError'
             }
           } else {
@@ -854,7 +855,6 @@ var BookingAgent = {
             continue;
           }
         } else if($E(selectors.pageTitle)?.innerText === 'Expanded') {
-          this.logs.append('[DEBUG] Confirm button not exists, navigated to Expanded page.');
           return 'succeeded';
         } else {
           this.logs.append('[DEBUG] Confirm button not exists, waiting for navigation to Expanded page ...');
@@ -867,6 +867,8 @@ var BookingAgent = {
 
     $E(selectors.confirmButton).click();
     const result = await waitForCompletion();
+    this.logs.append(`[INFO] Response: ${result}`);
+
     switch(result) {
       case 'reservationNotOpenYet':
         $E(selectors.errorDialogOkButton).click();
@@ -880,16 +882,14 @@ var BookingAgent = {
           this.logs.append(`[INFO] Selected next preferred court #${court}.`);
           await this.confirmAndRetry();
         } else {
-          this.logs.append(`[INFO] Tried court(s) ${this.state.courtsTried.join(', ')}, but no luck 😔`);
-          this.messageOverlay.open('info', `Tried court(s) ${this.state.courtsTried.join(', ')}, but no luck 😔`);
+          this.logs.append(`[INFO] Tried all court(s) ${this.state.courtsTried.join(', ')}, but no luck 😔`);
+          this.messageOverlay.open('info', `Tried all court(s) ${this.state.courtsTried.join(', ')}, but no luck 😔`);
         }
         break;
       case 'succeeded':
-        this.logs.append('[INFO] Booking is confirmed ☺️');
         this.messageOverlay.open('success', 'Booking is confirmed ☺️');
         break;
       case 'triedTooManyTimes':
-        this.logs.append('[ERROR] Tried too many times.');
         this.messageOverlay.open('error', 'Tried too many times.');
         break;
       default: // nonRetryableError
