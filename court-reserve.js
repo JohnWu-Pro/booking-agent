@@ -411,7 +411,8 @@ var css = /*css*/`
   }
 
   .booking-agent .logs-panel {
-    height: 72vh;
+    max-height: 64vh;
+    min-height: 32vh;
     overflow: auto;
     margin: 0 2px;
   }
@@ -763,25 +764,29 @@ var BookingAgent = {
       this.dashboard.show(this.state);
 
       this.stopScheduler();
+      this.logs.clear();
 
       // Triggering/Scheduling booking confirmation
+      this.logs.append('[DEBUG] Going to set scheduler ...');
       const { bookableNow, triggeringDateTime } = this.state;
-      const millis = bookableNow ? 0 : triggeringDateTime.getTime() - Date.now();
+      const millis = bookableNow ? 10 : triggeringDateTime.getTime() - Date.now();
       this.status = 'Scheduled';
       this.scheduler = setTimeout(() => this.triggerBooking(), millis);
     } catch(error) {
+      this.logs.append(`[ERROR] ${error}`);
       this.messageOverlay.open('error', error);
     }
   },
 
   triggerBooking: async function() {
+    this.logs.append('[DEBUG] Going to trigger booking (1) ...');
     try {
       if(this.status === 'Scheduled') {
+        this.logs.append('[DEBUG] Going to trigger booking (2) ...');
         this.status = 'Booking';
 
         this.dashboard.hide();
         this.state.triedCount = 0;
-        this.logs.clear();
 
         if(this.resolveSelectedCourt()) {
           await this.confirmAndRetry();
