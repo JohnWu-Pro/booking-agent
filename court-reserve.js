@@ -697,7 +697,7 @@ var BookingAgent = {
     const triggeringDateTime = new Date(selectedReservationDateTime);
     const { reservationLeadDays, bookingLeadTimeMillis, preferredCourts } = settings;
     triggeringDateTime.setDate(triggeringDateTime.getDate() - reservationLeadDays);
-    triggeringDateTime.setHours(7);
+    // triggeringDateTime.setHours(7);
 
     triggeringDateTime.setMilliseconds(triggeringDateTime.getMilliseconds() - bookingLeadTimeMillis);
 
