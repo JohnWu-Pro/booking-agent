@@ -4,10 +4,6 @@ function isNumber(value) {
   return typeof value === 'number' && Number.isFinite(value);
 }
 
-function $A(cssSelector, container) {
-  return (container ?? document).querySelectorAll(cssSelector);
-}
-
 function $E(cssSelector, container) {
   return (container ?? document).querySelector(cssSelector);
 }
@@ -445,7 +441,7 @@ var html = /*html*/`
     </div>
     <div class="input-panel">
       <div>
-        <div><label for="reservationDateTime">Reservation Date Time:</label></div>
+        <div><label for="reservationDateTime">Reservation Date & Time:</label></div>
         <div><input name="reservationDateTime" type="text" placeholder="yyyy-MM-dd HH:mm" onchange="BookingAgent.onUpdateSettings()"></div>
       </div>
       <div>
@@ -702,6 +698,14 @@ var BookingAgent = {
     $E('input#CourtId').value = '5002' + courtId;
   },
 
+  selectNextCourt: function() {
+    if(this.state.courtsToTry.length === 0) return false; // no more to try
+
+    const courtId = this.state.courtsToTry.shift();
+    this.setCourt(courtId);
+    return true;
+  },
+
   resolveSelectedCourt: function() {
     const courtId = $E('input#CourtId').value;
     return (courtId && courtId.length >= 5) ? courtId.at(-1) : undefined;
@@ -731,7 +735,7 @@ var BookingAgent = {
     triggeringDateTime.setMilliseconds(triggeringDateTime.getMilliseconds() - bookingLeadTimeMillis);
 
     const bookableNow = triggeringDateTime.getTime() <= Date.now();
-    courtsToTry = bookableNow ? [] : resolveCourtsToTry(courtsToTry);
+    courtsToTry = resolveCourtsToTry(courtsToTry);
 
     return {
       reservationDateTime,
@@ -936,14 +940,6 @@ var BookingAgent = {
       default: // nonRetryableError
         this.logs.append('[ERROR] A non-retryable error is encountered.');
     }
-  },
-
-  selectNextCourt: function() {
-    if(this.state.courtsToTry.length === 0) return false; // no more to try
-
-    const courtId = this.state.courtsToTry.shift();
-    this.setCourt(courtId);
-    return true;
   },
 
 };
