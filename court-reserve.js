@@ -610,6 +610,7 @@ var BookingAgent = {
     clear: function() {
       this.messages = []
       $E(this.selector).innerHTML = '';
+      this.append('[DEBUG] userAgent: ' + navigator.userAgent);
     },
     append: function(message) {
       this.messages.push(`${toTimeStringWithoutTz(new Date())} - ${message}`);
