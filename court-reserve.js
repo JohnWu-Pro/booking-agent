@@ -25,6 +25,12 @@ function append(tag, attributes, container) {
   return (container ?? document.body).appendChild(element);
 }
 
+function encodeHtml(text) {
+  var element = document.createElement('textarea');
+  element.innerText = text;
+  return element.innerHTML;
+}
+
 function delay(millis, value) {
   return new Promise(resolve => setTimeout(() => resolve(value), millis));
 }
@@ -41,6 +47,14 @@ function toDateTimeStringWithoutTz(datetime) {
   value.setMinutes(value.getMinutes() - value.getTimezoneOffset());
   return value.toISOString().substring(0,19).replace('T', ' ')
       + '.' + value.getMilliseconds().toString().padStart(3, '0');
+}
+
+function defaultReservationDateTime(leadDays, hours) {
+  const datetime = new Date();
+  datetime.setDate(datetime.getDate() + leadDays);
+  datetime.setHours(hours);
+  datetime.setMinutes(0);
+  return toDateTimeStringWithoutTz(datetime).substring(0, 16)
 }
 
 /**
@@ -520,7 +534,7 @@ var BookingAgent = {
     bookingLeadTimeMillis: 'input[name="bookingLeadTimeMillis"]',
   },
   settingsDefaults: {
-    reservationDateTime: '',
+    reservationDateTime: defaultReservationDateTime(10, 20),
     courtsToTry: '6, 4, 5',
     reservationLeadDays: 10,
     bookingLeadTimeMillis: 0,
@@ -623,7 +637,7 @@ var BookingAgent = {
       $E('.booking-agent .logs-backdrop').style.display = 'block';
       $E('.booking-agent .logs-overlay').style.display = 'block';
 
-      $E(this.selector).innerHTML = this.messages.map(msg => /*html*/`<div class="log-entry">${msg}</div>`).join('');
+      $E(this.selector).innerHTML = this.messages.map(msg => /*html*/`<div class="log-entry">${encodeHtml(msg)}</div>`).join('');
     },
     close: function() {
       $E('.booking-agent .logs-backdrop').style.display = 'none';
@@ -840,7 +854,9 @@ var BookingAgent = {
       this.scheduler = setTimeout(() => this.triggerBooking(), millis);
     } catch(error) {
       console.error(error);
-      this.logs.append(`[ERROR] ${error?.stack ?? error}`);
+      this.logs.append(`[ERROR] ${error}`);
+      this.logs.append(`[ERROR] ${error.stack}`);
+      this.logs.append('[DEBUG] Form HTML:\n' + $E('form#createReservation-Form').innerHTML);
       this.messageOverlay.open('error', error);
     }
   },
@@ -867,7 +883,9 @@ var BookingAgent = {
       }
     } catch(error) {
       console.error(error);
-      this.logs.append(`[ERROR] ${error?.stack ?? error}`);
+      this.logs.append(`[ERROR] ${error}`);
+      this.logs.append(`[ERROR] ${error.stack}`);
+      this.logs.append('[DEBUG] Form HTML:\n' + $E('form#createReservation-Form').innerHTML);
       this.messageOverlay.open('error', error);
     }
   },
