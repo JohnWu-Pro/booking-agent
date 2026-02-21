@@ -4,6 +4,10 @@ function isNumber(value) {
   return typeof value === 'number' && Number.isFinite(value);
 }
 
+function $A(cssSelector, container) {
+  return (container ?? document).querySelectorAll(cssSelector)
+}
+
 function $E(cssSelector, container) {
   return (container ?? document).querySelector(cssSelector);
 }
@@ -681,7 +685,7 @@ var BookingAgent = {
     // </span>
     const element = $E('span[data-testid="date-time-value"]');
     element.innerText = value.toString().substring(0,21);
-    element.style = 'color: red;';
+    element.style = 'color: red; font-weight: bold;';
 
     // Set form element
     const string = toDateTimeStringWithoutTz(value)
@@ -690,10 +694,33 @@ var BookingAgent = {
   },
 
   setCourt: function(courtId) {
+    const byHierarchy = () => $E('span.k-input-value-text', $E('input#CourtId').parentElement);
+    const byLabel = () => {
+      for (const span of $A('span.k-input-value-text')) {
+        if(span.innerText.startsWith('Hard - Court #')) {
+          return span;
+        }
+      }
+      return undefined;
+    }
+    const findLabelSpan = () => {
+      let span = byHierarchy();
+      if(span) {
+        this.logs.append('[DEBUG] Found court label span by hierarchy.');
+        return span;
+      }
+      span = byLabel();
+      if(span) {
+        this.logs.append('[DEBUG] Found court label span by label.');
+        return span;
+      }
+      throw new Error('Could not find the court label span.');
+    }
+
     // Set label
-    const element = $E('input#CourtId').parentElement.firstChild.firstChild;
+    const element = findLabelSpan();
     element.innerText = 'Hard - Court #' + courtId;
-    element.style = 'color: red;';
+    element.style = 'color: red; font-weight: bold;';
 
     // Set form element
     $E('input#CourtId').value = '5002' + courtId;
