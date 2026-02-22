@@ -1,5 +1,7 @@
 ((window) => {
 
+const APP_VERSION = '0.9.0';
+
 function isNumber(value) {
   return typeof value === 'number' && Number.isFinite(value);
 }
@@ -628,6 +630,7 @@ var BookingAgent = {
     clear: function() {
       this.messages = []
       $E(this.selector).innerHTML = '';
+      this.append('[INFO] BookingAgent Version: ' + APP_VERSION);
       this.append('[DEBUG] userAgent: ' + navigator.userAgent);
     },
     append: function(message) {
