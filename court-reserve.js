@@ -708,36 +708,28 @@ var BookingAgent = {
   },
 
   setCourt: function(courtId) {
-    const byHierarchy = () => $E('span.k-input-value-text', $E('input#CourtId').parentElement);
-    const byLabel = () => {
-      for (const span of $A('span.k-input-value-text')) {
-        if(span.innerText.startsWith('Hard - Court #')) {
-          return span;
-        }
-      }
-      return undefined;
-    }
-    const findLabelSpan = () => {
-      let span = byHierarchy();
-      if(span) {
-        this.logs.append('[DEBUG] Found court label span by hierarchy.');
-        return span;
-      }
-      span = byLabel();
-      if(span) {
-        this.logs.append('[DEBUG] Found court label span by label.');
-        return span;
-      }
-      throw new Error('Could not find the court label span.');
-    }
+    const value = '5002' + courtId;
+    const label = 'Hard - Court #' + courtId;
+    const style = 'color: red; font-weight: bold;';
 
-    // Set label
-    const element = findLabelSpan();
-    element.innerText = 'Hard - Court #' + courtId;
-    element.style = 'color: red; font-weight: bold;';
+    if(input = $E('input#CourtId')) {
+      // Set label
+      const element = $E('span.k-input-value-text', input.parentElement);
+      element.innerText = label;
+      element.style = style;
 
-    // Set form element
-    $E('input#CourtId').value = '5002' + courtId;
+      // Set form element
+      input.value = value;
+    } else if(select = $E('select#CourtIds')) {
+      // Set label
+      const element = $E('div#CourtIds_taglist > li');
+      element.innerText = label;
+      element.style = style;
+
+      // Set form element
+      select.length = 0; // Remove all options
+      select.add(create('option', {value, selected: true}));
+    }
   },
 
   selectNextCourt: function() {
@@ -749,7 +741,7 @@ var BookingAgent = {
   },
 
   resolveSelectedCourt: function() {
-    const courtId = $E('input#CourtId').value;
+    const courtId = $E('input#CourtId')?.value ?? $E('select#CourtIds')?.value;
     return (courtId && courtId.length >= 5) ? courtId.at(-1) : undefined;
   },
 
