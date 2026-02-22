@@ -1,6 +1,6 @@
 ((window) => {
 
-const APP_VERSION = '0.9.0';
+const APP_VERSION = '0.9.2';
 
 function isNumber(value) {
   return typeof value === 'number' && Number.isFinite(value);
