@@ -1,13 +1,9 @@
 ((window) => {
 
-const APP_VERSION = '0.9.2';
+const APP_VERSION = '0.9.3';
 
 function isNumber(value) {
   return typeof value === 'number' && Number.isFinite(value);
-}
-
-function $A(cssSelector, container) {
-  return (container ?? document).querySelectorAll(cssSelector)
 }
 
 function $E(cssSelector, container) {
@@ -111,13 +107,13 @@ class Timer {
   #tick() {
     const currentMillis = Date.now();
 
-    var state = {};
+    var state = {nextTick: 0};
     if(this.#status === 1) {
       const {hh, time} = Timer.format(currentMillis - new Date(currentMillis).getTimezoneOffset() * 60000);
       state = {
         icon: Timer.#clockIcons[hh % 12],
         time,
-        tickMillis: currentMillis
+        nextTick: Math.ceil(currentMillis / 1000) * 1000 - currentMillis
       };
     } else if(this.#status === 2) {
       const toEndMillis = Math.max(0, this.#endTimestamp.getTime() - currentMillis);
@@ -125,17 +121,17 @@ class Timer {
       state = {
         icon: Timer.#tickDownIcon,
         time,
-        tickMillis: toEndMillis
+        nextTick: toEndMillis % 1000
       };
     }
 
+    const {icon, time, nextTick} = state;
     if(this.#$icon) {
-      this.#$icon.innerText = state.icon;
+      this.#$icon.innerText = icon;
     }
-    this.#$time.innerText = state.time;
+    this.#$time.innerText = time;
 
-    const rem = Math.ceil(state.tickMillis / 1000) * 1000 - state.tickMillis;
-    if(this.#status !== 0) setTimeout(() => this.#tick(), rem);
+    if(this.#status !== 0 && nextTick > 0) setTimeout(() => this.#tick(), nextTick);
   }
 
   static format(millis) {
