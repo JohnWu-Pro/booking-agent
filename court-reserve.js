@@ -64,15 +64,22 @@ function defaultReservationDateTime(leadDays, hours) {
  */
 class Timer {
 
+  // Time Clocks: 🕛 🕐 🕑 🕒 🕓 🕔 🕕 🕖 🕗 🕘 🕙 🕚
+  static #clockIcons = ['🕛','🕐','🕑','🕒','🕓','🕔','🕕','🕖','🕗','🕘','🕙','🕚'];
+  // Hourglass Done: ⌛, Timer Clock: ⏲️, Alarm Clock: ⏰, Stopwatch: ⏱️
+  static #tickDownIcon = '⌛';
+
   #endTimestamp
-  #$element
+  #$icon
+  #$time
   #status // 0: stopped, 1: ticking-up, 2: ticking-down
 
-  constructor(selector) {
-    this.#$element = $E(selector);
+  constructor(selectors) {
+    this.#$icon = selectors.icon ? $E(selectors.icon) : undefined;
+    this.#$time = $E(selectors.time);
     this.#status = 0;
 
-    this.#$element.addEventListener('click', () => this.#toggleTicking());
+    this.#$time.parentElement.addEventListener('click', () => this.#toggleTicking());
   }
 
   start() {
@@ -103,12 +110,31 @@ class Timer {
 
   #tick() {
     const currentMillis = Date.now();
-    this.#$element.innerHTML = Timer.format(this.#status === 1
-      ? currentMillis - new Date(currentMillis).getTimezoneOffset() * 60000
-      : this.#endTimestamp.getTime() - currentMillis
-    );
 
-    const rem = Math.ceil(currentMillis / 1000) * 1000 - currentMillis;
+    var state = {};
+    if(this.#status === 1) {
+      const {hh, time} = Timer.format(currentMillis - new Date(currentMillis).getTimezoneOffset() * 60000);
+      state = {
+        icon: Timer.#clockIcons[hh % 12],
+        time,
+        tickMillis: currentMillis
+      };
+    } else if(this.#status === 2) {
+      const toEndMillis = Math.max(0, this.#endTimestamp.getTime() - currentMillis);
+      const {time} = Timer.format(toEndMillis);
+      state = {
+        icon: Timer.#tickDownIcon,
+        time,
+        tickMillis: toEndMillis
+      };
+    }
+
+    if(this.#$icon) {
+      this.#$icon.innerText = state.icon;
+    }
+    this.#$time.innerText = state.time;
+
+    const rem = Math.ceil(state.tickMillis / 1000) * 1000 - state.tickMillis;
     if(this.#status !== 0) setTimeout(() => this.#tick(), rem);
   }
 
@@ -125,7 +151,7 @@ class Timer {
     const {value: ss, rem: _sec} = mod(_min, 1000)
 
     const dd = (n) => n < 10 ? '0' + n : String(n)
-    return `${dd(hh)}:${dd(mm)}:${dd(ss)}`
+    return {hh, time: `${dd(hh)}:${dd(mm)}:${dd(ss)}`}
   }
 }
 window.Timer = Timer;
@@ -216,22 +242,29 @@ var css = /*css*/`
     display: none;
     position: fixed;
     bottom: 20vw;
-    left: 24vw;
-    width: auto;
-    height: 12vw;
+    left: 18vw;
     background: rgba(224,224,224,0.95);
     border: none;
     border-radius: 2vw;
-    align-items: center; /* vertically */
     z-index: 9000;
   }
 
   .booking-agent > .dashboard > .timer {
-    color: black;
-    padding: 0 3vw;
-    display: block;
-    font: normal 12vw 'Digital-7 Mono', sans-serif;
+    display: flex;
+    width: auto;
+    height: 12vw;
+    align-items: center; /* vertically */
     cursor: pointer;
+  }
+
+  .booking-agent > .dashboard > .timer > .icon {
+    font-size: 7.2vw;
+  }
+
+  .booking-agent > .dashboard > .timer > .time {
+    color: black;
+    font: normal 12vw 'Digital-7 Mono';
+    padding-right: 3vw;
   }
 
   .booking-agent > .settings-backdrop {
@@ -447,7 +480,10 @@ var html = /*html*/`
     <div class="menu-icon" onclick="BookingAgent.onShowSettings()"></div>
   </div>
   <div class="dashboard">
-    <div class="timer"></div>
+    <div class="timer">
+      <div class="icon"></div>
+      <div class="time"></div>
+    </div>
   </div>
   <div class="settings-backdrop"></div>
   <div class="settings-dialog">
@@ -554,7 +590,10 @@ var BookingAgent = {
 
     init: function(selector) {
       this.selector = selector;
-      this.timer = new Timer(`${selector} div.timer`);
+      this.timer = new Timer({
+        icon: `${selector} .timer > .icon`,
+        time: `${selector} .timer > .time`
+      });
     },
 
     show: function(state) {
@@ -973,7 +1012,8 @@ var BookingAgent = {
         }
         break;
       case 'succeeded':
-        this.messageOverlay.open('success', 'Booking is confirmed ☺️');
+        const court = this.resolveSelectedCourt();
+        this.messageOverlay.open('success', `Reserved Court #${court} at ${this.state.reservationDateTime} ☺️`);
         break;
       case 'triedTooManyTimes':
         this.messageOverlay.open('error', 'Tried too many times.');
