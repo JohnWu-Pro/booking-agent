@@ -1,6 +1,6 @@
 ((window) => {
 
-const APP_VERSION = '0.9.6';
+const APP_VERSION = '0.9.7';
 
 function isNumber(value) {
   return typeof value === 'number' && Number.isFinite(value);
@@ -107,7 +107,7 @@ class Timer {
   #tick() {
     const currentMillis = Date.now();
 
-    var state = {nextTick: 0};
+    var state = {nextTick: -1};
     if(this.#status === 1) {
       const {hh, time} = Timer.format(currentMillis - new Date(currentMillis).getTimezoneOffset() * 60000);
       state = {
@@ -131,7 +131,9 @@ class Timer {
     }
     this.#$time.innerText = time;
 
-    if(this.#status !== 0 && nextTick >= 0) setTimeout(() => this.#tick(), nextTick);
+    if(this.#status !== 0 && nextTick >= 0) {
+      setTimeout(() => this.#tick(), nextTick === 0 ? 999 : nextTick);
+    }
   }
 
   static format(millis) {
