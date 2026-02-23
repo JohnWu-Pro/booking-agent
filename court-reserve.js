@@ -1,6 +1,6 @@
 ((window) => {
 
-const APP_VERSION = '0.9.4';
+const APP_VERSION = '0.9.5';
 
 function isNumber(value) {
   return typeof value === 'number' && Number.isFinite(value);
@@ -121,7 +121,7 @@ class Timer {
       state = {
         icon: Timer.#tickDownIcon,
         time,
-        nextTick: toEndMillis % 1000
+        nextTick: toEndMillis === 0 ? 0 : Math.max(1, toEndMillis % 1000)
       };
     }
 
