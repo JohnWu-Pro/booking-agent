@@ -1,6 +1,6 @@
 ((window) => {
 
-const APP_VERSION = '0.9.5';
+const APP_VERSION = '0.9.6';
 
 function isNumber(value) {
   return typeof value === 'number' && Number.isFinite(value);
@@ -121,7 +121,7 @@ class Timer {
       state = {
         icon: Timer.#tickDownIcon,
         time,
-        nextTick: toEndMillis === 0 ? 0 : Math.max(1, toEndMillis % 1000)
+        nextTick: toEndMillis === 0 ? -1 : toEndMillis % 1000
       };
     }
 
@@ -131,7 +131,7 @@ class Timer {
     }
     this.#$time.innerText = time;
 
-    if(this.#status !== 0 && nextTick > 0) setTimeout(() => this.#tick(), nextTick);
+    if(this.#status !== 0 && nextTick >= 0) setTimeout(() => this.#tick(), nextTick);
   }
 
   static format(millis) {
