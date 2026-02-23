@@ -1,6 +1,6 @@
 ((window) => {
 
-const APP_VERSION = '0.9.3';
+const APP_VERSION = '0.9.4';
 
 function isNumber(value) {
   return typeof value === 'number' && Number.isFinite(value);
@@ -536,6 +536,8 @@ var html = /*html*/`
     <div class="logs-panel" onclick="BookingAgent.logs.copyToClipboard()">
     </div>
   </div>
+  <audio class="success" src="https://cdn.freesound.org/previews/341/341985_6101353-lq.mp3" preload="auto"></audio>
+  <audio class="error" src="https://cdn.freesound.org/previews/648/648425_13579627-lq.mp3" preload="auto"></audio>
 `;
 
 var prompts = {
@@ -1009,12 +1011,14 @@ var BookingAgent = {
         break;
       case 'succeeded':
         const court = this.resolveSelectedCourt();
+        $E('audio.success').play();
         this.messageOverlay.open('success', `Reserved Court #${court} at ${this.state.reservationDateTime} ☺️`);
         break;
       case 'triedTooManyTimes':
         this.messageOverlay.open('error', 'Tried too many times.');
         break;
       default: // nonRetryableError
+        $E('audio.error').play();
         this.logs.append('[ERROR] A non-retryable error is encountered.');
     }
   },
