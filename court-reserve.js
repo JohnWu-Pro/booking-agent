@@ -1,6 +1,6 @@
 ((window) => {
 
-const APP_VERSION = '0.9.7';
+const APP_VERSION = '0.9.8';
 
 function isNumber(value) {
   return typeof value === 'number' && Number.isFinite(value);
@@ -45,14 +45,6 @@ function toDateTimeStringWithoutTz(datetime) {
   value.setMinutes(value.getMinutes() - value.getTimezoneOffset());
   return value.toISOString().substring(0,19).replace('T', ' ')
       + '.' + value.getMilliseconds().toString().padStart(3, '0');
-}
-
-function defaultReservationDateTime(leadDays, hours) {
-  const datetime = new Date();
-  datetime.setDate(datetime.getDate() + leadDays);
-  datetime.setHours(hours);
-  datetime.setMinutes(0);
-  return toDateTimeStringWithoutTz(datetime).substring(0, 16)
 }
 
 /**
@@ -154,19 +146,19 @@ class Timer {
 }
 window.Timer = Timer;
 
-class Settings {
-  static #key = 'court-reserve.booking-agent.settings'
-
+class AbstractSettings {
+  #key
   #defaults
   #$elements
   #values
 
-  constructor(selectors, defaults) {
+  constructor(storageKey, selectors, defaults) {
     const $elements = {};
     for(const [key, _] of Object.entries(defaults)) {
       $elements[key] = $E(selectors[key]);
     }
 
+    this.#key = storageKey;
     this.#defaults = defaults;
     this.#$elements = $elements;
   }
@@ -174,7 +166,7 @@ class Settings {
   get values() { return {...this.#values}; }
 
   load() {
-    const item = localStorage.getItem(Settings.#key);
+    const item = localStorage.getItem(this.#key);
     const loaded = item ? JSON.parse(item) : {};
 
     const values = {}
@@ -205,7 +197,36 @@ class Settings {
   }
 
   save() {
-    localStorage.setItem(Settings.#key, JSON.stringify(this.#values));
+    localStorage.setItem(this.#key, JSON.stringify(this.#values));
+  }
+}
+window.AbstractSettings = AbstractSettings;
+
+class Settings extends AbstractSettings {
+  static #defaultReservationDateTime = function(leadDays, hours) {
+    const datetime = new Date();
+    datetime.setDate(datetime.getDate() + leadDays);
+    datetime.setHours(hours);
+    datetime.setMinutes(0);
+    return toDateTimeStringWithoutTz(datetime).substring(0, 16)
+  }
+
+  constructor() {
+    super(
+      'court-reserve.booking-agent.settings',
+      {
+        reservationDateTime: 'input[name="reservationDateTime"]',
+        courtsToTry: 'input[name="courtsToTry"]',
+        reservationLeadDays: 'input[name="reservationLeadDays"]',
+        bookingLeadTimeMillis: 'input[name="bookingLeadTimeMillis"]',
+      },
+      {
+        reservationDateTime: Settings.#defaultReservationDateTime(10, 20),
+        courtsToTry: '6, 4, 5',
+        reservationLeadDays: 10,
+        bookingLeadTimeMillis: 0,
+      }
+    )
   }
 }
 window.Settings = Settings;
@@ -565,19 +586,6 @@ var BookingAgent = {
 
   status: 'Unloaded', // Unloaded, Loaded, Scheduled, Booking, Booked
 
-  settingsSelectors: {
-    reservationDateTime: 'input[name="reservationDateTime"]',
-    courtsToTry: 'input[name="courtsToTry"]',
-    reservationLeadDays: 'input[name="reservationLeadDays"]',
-    bookingLeadTimeMillis: 'input[name="bookingLeadTimeMillis"]',
-  },
-  settingsDefaults: {
-    reservationDateTime: defaultReservationDateTime(10, 20),
-    courtsToTry: '6, 4, 5',
-    reservationLeadDays: 10,
-    bookingLeadTimeMillis: 0,
-  },
-
   settings: undefined,
 
   scheduler: 0,
@@ -830,7 +838,7 @@ var BookingAgent = {
     append('style', {id: "booking-agent", type: "text/css"}, document.head).innerHTML = css;
     append('div', {className: "booking-agent"}).innerHTML = html;
 
-    this.settings = new Settings(this.settingsSelectors, this.settingsDefaults);
+    this.settings = new Settings();
 
     this.dashboard.init('.booking-agent .dashboard');
 
