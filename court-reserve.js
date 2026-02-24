@@ -1,6 +1,6 @@
 ((window) => {
 
-const APP_VERSION = '0.9.8';
+const APP_VERSION = '0.9.9';
 
 function isNumber(value) {
   return typeof value === 'number' && Number.isFinite(value);
@@ -570,7 +570,7 @@ var prompts = {
 var BookingAgent = {
   site: {
     origin: 'https://mobileapp.courtreserve.com',
-    loginPath: '/Account/Login',
+    loginPath: '/Account/Login?isMobileLayout=True',
     reservationPrefix: '/Online/Reservations/Index/',
     knownPaths: new RegExp('^/Online'
       + '(/Portal/Index'
@@ -683,6 +683,13 @@ var BookingAgent = {
     append: function(message) {
       this.messages.push(`${toTimeStringWithoutTz(new Date())} - ${message}`);
     },
+    appendError: function(error) {
+      this.append(`[ERROR] ${error}\n${error.stack}`);
+    },
+    appendForm: function(form) {
+      this.append('[DEBUG] Form Data:\n' + JSON.stringify(Object.fromEntries(new FormData(form))));
+      // this.append('[DEBUG] Form HTML:\n' + form.outerHTML);
+    },
     open: function() {
       $E('.booking-agent .logs-backdrop').style.display = 'block';
       $E('.booking-agent .logs-overlay').style.display = 'block';
@@ -742,6 +749,10 @@ var BookingAgent = {
     }
   },
 
+  getForm: function() {
+    return $E('form#createReservation-Form');
+  },
+
   setReservationDateTime: function(value) {
     // Set label
     // <span class="form-control b-size" disabled="disabled" data-testid="date-time-value">
@@ -786,7 +797,9 @@ var BookingAgent = {
     if(this.state.courtsToTry.length === 0) return false; // no more to try
 
     const courtId = this.state.courtsToTry.shift();
-    this.setCourt(courtId);
+    if(courtId !== this.resolveSelectedCourt()) {
+      this.setCourt(courtId);
+    }
     return true;
   },
 
@@ -888,6 +901,7 @@ var BookingAgent = {
       this.logs.append('[DEBUG] Going to fill the form ...');
       this.setReservationDateTime(reservationDateTime);
       this.selectNextCourt();
+      this.logs.appendForm(this.getForm());
 
       // Triggering/Scheduling booking confirmation
       this.logs.append('[DEBUG] Going to set scheduler ...');
@@ -896,9 +910,7 @@ var BookingAgent = {
       this.scheduler = setTimeout(() => this.triggerBooking(), millis);
     } catch(error) {
       console.error(error);
-      this.logs.append(`[ERROR] ${error}`);
-      this.logs.append(`[ERROR] ${error.stack}`);
-      this.logs.append('[DEBUG] Form HTML:\n' + $E('form#createReservation-Form').innerHTML);
+      this.logs.appendError(error);
       this.messageOverlay.open('error', error);
     }
   },
@@ -925,9 +937,8 @@ var BookingAgent = {
       }
     } catch(error) {
       console.error(error);
-      this.logs.append(`[ERROR] ${error}`);
-      this.logs.append(`[ERROR] ${error.stack}`);
-      this.logs.append('[DEBUG] Form HTML:\n' + $E('form#createReservation-Form').innerHTML);
+      this.logs.appendError(error);
+      this.logs.appendForm(this.getForm());
       this.messageOverlay.open('error', error);
     }
   },
