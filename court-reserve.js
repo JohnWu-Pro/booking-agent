@@ -1,6 +1,6 @@
 ((window) => {
 
-const APP_VERSION = '0.9.9';
+const APP_VERSION = '0.9.10';
 
 function isNumber(value) {
   return typeof value === 'number' && Number.isFinite(value);
@@ -683,12 +683,8 @@ var BookingAgent = {
     append: function(message) {
       this.messages.push(`${toTimeStringWithoutTz(new Date())} - ${message}`);
     },
-    appendError: function(error) {
+    error: function(error) {
       this.append(`[ERROR] ${error}\n${error.stack}`);
-    },
-    appendForm: function(form) {
-      this.append('[DEBUG] Form Data:\n' + JSON.stringify(Object.fromEntries(new FormData(form))));
-      // this.append('[DEBUG] Form HTML:\n' + form.outerHTML);
     },
     open: function() {
       $E('.booking-agent .logs-backdrop').style.display = 'block';
@@ -794,13 +790,14 @@ var BookingAgent = {
   },
 
   selectNextCourt: function() {
-    if(this.state.courtsToTry.length === 0) return false; // no more to try
+    if(this.state.courtsToTry.length === 0) return undefined; // no more to try
 
     const courtId = this.state.courtsToTry.shift();
     if(courtId !== this.resolveSelectedCourt()) {
       this.setCourt(courtId);
     }
-    return true;
+    this.state.courtsTried.push(courtId);
+    return courtId;
   },
 
   resolveSelectedCourt: function() {
@@ -901,7 +898,6 @@ var BookingAgent = {
       this.logs.append('[DEBUG] Going to fill the form ...');
       this.setReservationDateTime(reservationDateTime);
       this.selectNextCourt();
-      this.logs.appendForm(this.getForm());
 
       // Triggering/Scheduling booking confirmation
       this.logs.append('[DEBUG] Going to set scheduler ...');
@@ -910,7 +906,7 @@ var BookingAgent = {
       this.scheduler = setTimeout(() => this.triggerBooking(), millis);
     } catch(error) {
       console.error(error);
-      this.logs.appendError(error);
+      this.logs.error(error);
       this.messageOverlay.open('error', error);
     }
   },
@@ -925,20 +921,14 @@ var BookingAgent = {
         this.dashboard.hide();
         this.state.triedCount = 0;
 
-        if(this.resolveSelectedCourt()) {
-          await this.confirmAndRetry();
-        } else if(this.selectNextCourt()) {
-          const court = this.resolveSelectedCourt();
-          this.logs.append(`[INFO] Selected next preferred court #${court}.`);
-          await this.confirmAndRetry();
-        }
+        await this.confirmAndRetry();
 
         this.status = 'Booked';
       }
     } catch(error) {
       console.error(error);
-      this.logs.appendError(error);
-      this.logs.appendForm(this.getForm());
+      this.logs.error(error);
+      this.logs.append('[DEBUG] Form HTML:\n' + this.getForm().outerHTML);
       this.messageOverlay.open('error', error);
     }
   },
@@ -1009,6 +999,7 @@ var BookingAgent = {
       return 'triedTooManyTimes';
     }
 
+    this.logs.append('[DEBUG] Form Data:\n' + JSON.stringify(Object.fromEntries(new FormData(this.getForm()))));
     $E(selectors.confirmButton).click();
     const result = await waitForCompletion();
     this.logs.append(`[INFO] Response: ${result}`);
@@ -1020,20 +1011,18 @@ var BookingAgent = {
         break;
       case 'courtNoLongerAvailable':
         $E(selectors.errorDialogOkButton).click();
-        this.state.courtsTried.push(this.resolveSelectedCourt());
-        if(this.selectNextCourt()) {
-          const court = this.resolveSelectedCourt();
-          this.logs.append(`[INFO] Selected next preferred court #${court}.`);
+        if(court = this.selectNextCourt()) {
+          this.logs.append(`[INFO] Selected next court #${court}.`);
           await this.confirmAndRetry();
         } else {
-          this.logs.append(`[INFO] Tried all court(s) ${this.state.courtsTried.join(', ')}, but no luck 😔`);
-          this.messageOverlay.open('info', `Tried all court(s) ${this.state.courtsTried.join(', ')}, but no luck 😔`);
+          const msg = `Tried all court(s) ${this.state.courtsTried.join(', ')}, but no luck 😔`;
+          this.logs.append('[INFO] ' + msg);
+          this.messageOverlay.open('info', msg);
         }
         break;
       case 'succeeded':
-        const court = this.resolveSelectedCourt();
+        this.messageOverlay.open('success', `Reserved Court #${this.state.courtsTried.at(-1)} at ${this.state.reservationDateTime} ☺️`);
         $E('audio.success').play();
-        this.messageOverlay.open('success', `Reserved Court #${court} at ${this.state.reservationDateTime} ☺️`);
         break;
       case 'triedTooManyTimes':
         this.messageOverlay.open('error', 'Tried too many times.');

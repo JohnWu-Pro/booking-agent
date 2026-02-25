@@ -8,7 +8,7 @@
     body {
       font-size: xx-large;
     }
-    b.any {
+    b.desired {
       color: red;
     }
     b.keep {
@@ -64,18 +64,18 @@
       </li>
       <li><b>Work Flow</b>
         <ol>
-          <li>User taps/clicks the <code>Book a Court</code> to initiate the reservation process,</li>
-          <li>User taps/selects <b class="any">any court</b> at <b class="any">any date & time</b>,</li>
+          <li>A few (<b>15 or less</b>) minutes before the reservation is officially open, user taps the <code>Book a Court</code> to initiate the reservation process,</li>
+          <li>User taps <b class="desired">the desired court</b> at <b class="desired">a date that is one or two days prior to the desired date & time</b>,</li>
           <li>User selects the desired <code>Reservation Type</code>, <code>Duration</code>, and <code>Players</code>,</li>
-          <li>User taps/clicks <code class="menu">☰</code> to launch the settings dialog,</li>
-          <li>User specifies <code>Reservation Date & Time</code>, <code>Courts to Try</code>, and other settings options,</li>
-          <li>User taps/clicks <code>Schedule Booking at ...</code> and wait,</li>
+          <li>User taps <code class="menu">☰</code> to launch the settings dialog,</li>
+          <li>User specifies <code>Reservation Date & Time</code>, <code>Courts to Try</code> (put the desired court as the first), and other settings options,</li>
+          <li>User taps <code>Schedule Booking at ...</code> and wait,</li>
           <li>The <code>BookingAgent</code> sets the reservation <code>Date & Time</code>, and the <code>Court</code>,</li>
           <li>User <b class="keep">keeps the reservation screen active</b> until the reservation is officially open, then</li>
           <li>The <code>BookingAgent</code> triggers the confirmation process, retry will be performed if applicable.</li>
         </ol>
       </li>
-      <li><b>Working Logic</b>: A short moment (specified by the <code>Booking Leading Time</code>) before the reservation is officially open, the <code>BookingAgent</code>
+      <li><b>Working Logic</b>: Exactly when or a short moment (specified by the <code>Booking Leading Time</code>) before the reservation is officially open, the <code>BookingAgent</code>
         <ol>
           <li>Clicks the <code>Confirm</code> button, then wait for the response.</li>
           <li>If the response indicates a success, the process ends.</li>
