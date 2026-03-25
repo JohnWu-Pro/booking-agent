@@ -1,6 +1,6 @@
 ((window) => {
 
-const APP_VERSION = '0.9.10';
+const APP_VERSION = '1.0.0';
 
 function isNumber(value) {
   return typeof value === 'number' && Number.isFinite(value);
@@ -966,7 +966,7 @@ var BookingAgent = {
       // -- up to 2 reservations
       // -- no available courts
       // Sorry, no available courts for the time requested.
-      for ( ; this.state.triedCount < 100; this.state.triedCount++) {
+      for ( ; this.state.triedCount < 150; this.state.triedCount++) {
         await delay(100);
         const button = $E(selectors.confirmButton);
         if(button) {
